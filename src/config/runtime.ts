@@ -23,6 +23,9 @@ export const runtimeConfig = {
     'ups-management'
   ),
   plateformUrl: resolve('PLATEFORM_URL', import.meta.env.VITE_PLATEFORM_URL),
+  // Clé Google Maps : visible côté navigateur par conception, elle doit être
+  // restreinte par domaine dans la console Google Cloud.
+  googleMapsApiKey: resolve('GOOGLE_MAPS_API_KEY', import.meta.env.VITE_GOOGLE_MAPS_API_KEY),
 };
 
 /**

@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_KEYCLOAK_REALM: string;
   readonly VITE_KEYCLOAK_CLIENT_ID: string;
   readonly VITE_PLATEFORM_URL?: string;
+  readonly VITE_GOOGLE_MAPS_API_KEY?: string;
 }
 
 interface ImportMeta {
@@ -22,8 +23,10 @@ interface AppRuntimeConfig {
   KEYCLOAK_REALM?: string;
   KEYCLOAK_CLIENT_ID?: string;
   PLATEFORM_URL?: string;
+  GOOGLE_MAPS_API_KEY?: string;
 }
 
 interface Window {
   __APP_CONFIG__?: AppRuntimeConfig;
+  google?: typeof google;
 }

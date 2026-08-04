@@ -27,6 +27,18 @@ L'interface démarre sur `http://localhost:5173`.
 | `VITE_KEYCLOAK_REALM` | Realm Keycloak (défaut `konitys`) |
 | `VITE_KEYCLOAK_CLIENT_ID` | Client Keycloak (défaut `ups-management`) |
 | `VITE_PLATEFORM_URL` | Host plateforme exposant HeaderBar/Sidebar via Module Federation. Vide → composants locaux |
+| `VITE_GOOGLE_MAPS_API_KEY` | Clé Google Places pour l'autocomplétion d'adresse. Vide → saisie manuelle |
+
+### Autocomplétion d'adresse
+
+Les champs « Adresse » utilisent Google Places : choisir une suggestion remplit
+automatiquement la ville, l'état, le code postal et le pays. Sur la page Validation,
+les suggestions sont restreintes aux États-Unis et Porto Rico, seuls pays couverts
+par cette API UPS.
+
+La clé doit avoir l'API **Places** activée et la facturation configurée. Elle est
+visible dans le navigateur — **restreignez-la par domaine** (HTTP referrers) dans la
+console Google Cloud. Sans clé, les champs restent en saisie manuelle : rien ne casse.
 
 En production, ces variables sont injectées **au démarrage du conteneur** :
 les modifier ne demande pas de reconstruire l'image.

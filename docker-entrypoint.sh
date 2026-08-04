@@ -18,7 +18,8 @@ window.__APP_CONFIG__ = {
   KEYCLOAK_URL: "$(escape "${VITE_KEYCLOAK_URL}")",
   KEYCLOAK_REALM: "$(escape "${VITE_KEYCLOAK_REALM}")",
   KEYCLOAK_CLIENT_ID: "$(escape "${VITE_KEYCLOAK_CLIENT_ID}")",
-  PLATEFORM_URL: "$(escape "${VITE_PLATEFORM_URL}")"
+  PLATEFORM_URL: "$(escape "${VITE_PLATEFORM_URL}")",
+  GOOGLE_MAPS_API_KEY: "$(escape "${VITE_GOOGLE_MAPS_API_KEY}")"
 };
 EOF
 
