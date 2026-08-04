@@ -58,13 +58,13 @@ export default function Rating() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="max-w-[1400px]">
       <PageHeader
         title="Calcul de tarifs"
         subtitle="Comparez les services UPS disponibles pour une destination."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:items-start">
         <form onSubmit={submit} className="space-y-4">
           <Card>
             <CardTitle title="Destination" />

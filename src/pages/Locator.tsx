@@ -39,7 +39,7 @@ export default function Locator() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="max-w-[1400px]">
       <PageHeader
         title="Points relais"
         subtitle="Recherchez les UPS Access Points autour d'une adresse de livraison."
