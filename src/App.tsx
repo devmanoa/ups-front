@@ -1,0 +1,53 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AppLayout from './components/layout/AppLayout';
+import Tracking from './pages/Tracking';
+import Rating from './pages/Rating';
+import Shipping from './pages/Shipping';
+import Locator from './pages/Locator';
+import AddressValidation from './pages/AddressValidation';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 1000 * 60, retry: 1 },
+  },
+});
+
+function Guard({ children }: { children: ReactNode }) {
+  const { isLoading, isAuthenticated, authConfigured } = useAuth();
+
+  if (isLoading) {
+    return <div className="p-6 text-[--k-muted]">Connexion en cours…</div>;
+  }
+  // Sans Keycloak configuré, l'app reste utilisable (développement local).
+  if (authConfigured && !isAuthenticated) {
+    return <div className="p-6 text-[--k-muted]">Authentification requise.</div>;
+  }
+  return <>{children}</>;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Guard>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route index element={<Navigate to="/tracking" replace />} />
+                <Route path="tracking" element={<Tracking />} />
+                <Route path="rating" element={<Rating />} />
+                <Route path="shipping" element={<Shipping />} />
+                <Route path="locator" element={<Locator />} />
+                <Route path="address" element={<AddressValidation />} />
+                <Route path="*" element={<Navigate to="/tracking" replace />} />
+              </Route>
+            </Routes>
+          </Guard>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </AuthProvider>
+  );
+}
