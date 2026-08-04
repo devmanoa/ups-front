@@ -58,18 +58,18 @@ export default function Rating() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Calcul de tarifs"
         subtitle="Comparez les services UPS disponibles pour une destination."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:items-start">
         <form onSubmit={submit} className="space-y-4">
           <Card>
             <CardTitle title="Destination" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+            <div className="grid gap-3 sm:grid-cols-6">
+              <div className="sm:col-span-6">
                 <AddressAutocomplete
                   label="Adresse"
                   placeholder="Commencez à taper l'adresse…"
@@ -86,34 +86,42 @@ export default function Rating() {
                   }
                 />
               </div>
-              <Field
-                label="Ville"
-                placeholder="Lyon"
-                value={shipTo.city ?? ''}
-                onChange={(e) => set({ city: e.target.value })}
-              />
-              <Field
-                label="Code postal"
-                required
-                placeholder="69001"
-                value={shipTo.postalCode ?? ''}
-                onChange={(e) => set({ postalCode: e.target.value })}
-              />
-              <Field
-                label="Pays (ISO 2)"
-                required
-                maxLength={2}
-                value={shipTo.country ?? ''}
-                onChange={(e) => set({ country: e.target.value.toUpperCase() })}
-              />
-              <SelectField
-                label="Type d'adresse"
-                value={shipTo.residential ? '1' : ''}
-                onChange={(e) => set({ residential: e.target.value === '1' })}
-              >
-                <option value="">Professionnelle</option>
-                <option value="1">Résidentielle</option>
-              </SelectField>
+              <div className="sm:col-span-3">
+                <Field
+                  label="Ville"
+                  placeholder="Lyon"
+                  value={shipTo.city ?? ''}
+                  onChange={(e) => set({ city: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Field
+                  label="Code postal"
+                  required
+                  placeholder="69001"
+                  value={shipTo.postalCode ?? ''}
+                  onChange={(e) => set({ postalCode: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <Field
+                  label="Pays"
+                  required
+                  maxLength={2}
+                  value={shipTo.country ?? ''}
+                  onChange={(e) => set({ country: e.target.value.toUpperCase() })}
+                />
+              </div>
+              <div className="sm:col-span-6">
+                <SelectField
+                  label="Type d'adresse"
+                  value={shipTo.residential ? '1' : ''}
+                  onChange={(e) => set({ residential: e.target.value === '1' })}
+                >
+                  <option value="">Professionnelle</option>
+                  <option value="1">Résidentielle</option>
+                </SelectField>
+              </div>
             </div>
           </Card>
 
