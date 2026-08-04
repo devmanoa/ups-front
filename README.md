@@ -53,6 +53,19 @@ npm run build     # génère dist/
 npm run preview   # prévisualise le build
 ```
 
+## Déploiement (Docker / Coolify)
+
+```bash
+docker build -t ups-frontend .
+docker run -p 8080:80 -e VITE_API_URL=https://api-ups.mondomaine.fr ups-frontend
+```
+
+Sur Coolify : Build Pack **Dockerfile**, port `80`, variable `VITE_API_URL`.
+
+L'image est construite en deux étapes (Node pour le build, Nginx pour le service).
+`VITE_API_URL` est injectée **au démarrage du conteneur** via `/config.js` : la modifier
+et redémarrer suffit, aucun rebuild n'est nécessaire.
+
 ## Notes
 
 - Les données affichées proviennent de l'API UPS et sont échappées avant insertion HTML.
