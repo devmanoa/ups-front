@@ -29,9 +29,11 @@ export function loadGoogleMaps(): Promise<void> {
 
   loaderPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script');
+    // "places" pour l'autocomplétion d'adresse, "marker" pour la carte des
+    // points relais. Un seul chargement sert les deux usages.
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
       key
-    )}&libraries=places&language=fr`;
+    )}&libraries=places,marker&language=fr`;
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();

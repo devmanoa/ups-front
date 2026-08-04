@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type MouseEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { MapPin, Search, ExternalLink, Phone, Copy, Check, Navigation } from 'lucide-react';
+import { Search, ExternalLink, Phone, Copy, Check, Navigation } from 'lucide-react';
 import { api, type LocatorPayload } from '../services/api';
 import type { AccessPointLocation, LocatorResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -11,15 +11,20 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { AccessPointsMap } from '../components/AccessPointsMap';
 
 export default function Locator() {
   const [address, setAddress] = useState<Address>({ country: 'FR' });
   const [radius, setRadius] = useState('25');
   const [unit, setUnit] = useState('KM');
   const [maxResults, setMaxResults] = useState('10');
+  /** Point relais mis en avant, partagé entre la carte et la liste. */
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const mutation = useMutation<LocatorResult, Error, LocatorPayload>({
     mutationFn: (payload) => api.findAccessPoints(payload),
+    // Les index d'une recherche précédente ne correspondent plus.
+    onMutate: () => setActiveIndex(null),
   });
 
   const set = (patch: Partial<Address>) => setAddress((prev) => ({ ...prev, ...patch }));
@@ -45,7 +50,7 @@ export default function Locator() {
         subtitle="Recherchez les UPS Access Points autour d'une adresse de livraison."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start">
         <form onSubmit={submit} className="lg:sticky lg:top-4">
           <Card>
             <CardTitle title="Zone de recherche" />
@@ -127,13 +132,26 @@ export default function Locator() {
                 Aucun point relais trouvé dans ce rayon. Essayez d'élargir la recherche.
               </Alert>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                <AccessPointsMap
+                  locations={mutation.data.locations}
+                  activeIndex={activeIndex}
+                  onActivate={setActiveIndex}
+                />
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[--k-muted]">
                   {mutation.data.locations.length} point(s) relais — du plus proche au plus éloigné
                 </p>
-                {mutation.data.locations.map((loc, i) => (
-                  <LocationRow key={loc.locationId || i} loc={loc} />
-                ))}
+                <div className="space-y-2">
+                  {mutation.data.locations.map((loc, i) => (
+                    <LocationRow
+                      key={loc.locationId || i}
+                      loc={loc}
+                      index={i}
+                      active={activeIndex === i}
+                      onActivate={() => setActiveIndex(i)}
+                    />
+                  ))}
+                </div>
               </div>
             )
           ) : (
@@ -149,12 +167,21 @@ export default function Locator() {
   );
 }
 
-function LocationRow({ loc }: { loc: AccessPointLocation }) {
+interface LocationRowProps {
+  loc: AccessPointLocation;
+  index: number;
+  active: boolean;
+  onActivate: () => void;
+}
+
+function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
   const [copied, setCopied] = useState(false);
   const address = [...loc.addressLines, loc.postalCode, loc.city].filter(Boolean).join(', ');
 
   // L'ID du point relais alimente le champ « ID point relais » de la page Étiquettes.
-  const copyId = async () => {
+  const copyId = async (e: MouseEvent<HTMLButtonElement>) => {
+    // Sans cela, le clic sélectionnerait aussi la ligne.
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(loc.locationId);
       setCopied(true);
@@ -165,10 +192,24 @@ function LocationRow({ loc }: { loc: AccessPointLocation }) {
   };
 
   return (
-    <div className="rounded-xl border border-[--k-border] bg-[--k-surface] p-3 transition hover:border-[--k-primary]/30">
+    <div
+      onMouseEnter={onActivate}
+      onClick={onActivate}
+      className={`cursor-pointer rounded-xl border bg-[--k-surface] p-3 transition ${
+        active
+          ? 'border-[--k-primary] ring-2 ring-[--k-primary]/15'
+          : 'border-[--k-border] hover:border-[--k-primary]/30'
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-[--k-text]">
-          <MapPin className="h-4 w-4 shrink-0 text-[--k-primary]" />
+          <span
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white ${
+              active ? 'bg-[--k-sidebar-bg]' : 'bg-[--k-primary]'
+            }`}
+          >
+            {index + 1}
+          </span>
           {loc.name || 'Point relais'}
         </h3>
         {loc.distance && (
@@ -202,13 +243,14 @@ function LocationRow({ loc }: { loc: AccessPointLocation }) {
         )}
         {loc.latitude != null && loc.longitude != null && (
           <a
-            href={`https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`}
+            href={`https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-[--k-primary] hover:underline"
           >
             <ExternalLink className="h-3 w-3" />
-            Carte
+            Itinéraire
           </a>
         )}
       </div>

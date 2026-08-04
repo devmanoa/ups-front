@@ -36,9 +36,17 @@ automatiquement la ville, l'état, le code postal et le pays. Sur la page Valida
 les suggestions sont restreintes aux États-Unis et Porto Rico, seuls pays couverts
 par cette API UPS.
 
-La clé doit avoir l'API **Places** activée et la facturation configurée. Elle est
-visible dans le navigateur — **restreignez-la par domaine** (HTTP referrers) dans la
-console Google Cloud. Sans clé, les champs restent en saisie manuelle : rien ne casse.
+La clé doit avoir l'API **Places** et l'API **Maps JavaScript** activées, ainsi que la
+facturation configurée. Elle est visible dans le navigateur — **restreignez-la par
+domaine** (HTTP referrers) dans la console Google Cloud. Sans clé, les champs restent
+en saisie manuelle et la liste des points relais s'affiche sans carte : rien ne casse.
+
+### Carte des points relais
+
+Les résultats sont affichés sur une carte Google avec des marqueurs numérotés,
+synchronisée avec la liste : survoler une ligne met son marqueur en avant et ouvre
+son infobulle, cliquer un marqueur met la ligne en évidence. L'infobulle reprend
+l'adresse, le téléphone, la distance, l'ID du point et les horaires.
 
 En production, ces variables sont injectées **au démarrage du conteneur** :
 les modifier ne demande pas de reconstruire l'image.
@@ -50,7 +58,7 @@ les modifier ne demande pas de reconstruire l'image.
 | Suivi de colis | `/tracking` | Recherche par numéro 1Z… avec chronologie des événements |
 | Tarifs | `/rating` | Comparaison des services UPS, multi-colis, tarifs négociés |
 | Étiquettes | `/shipping` | Création d'expédition, aperçu, téléchargement, annulation |
-| Points relais | `/locator` | Recherche d'UPS Access Points, horaires, lien carte |
+| Points relais | `/locator` | Carte Google des UPS Access Points + liste synchronisée, horaires, ID copiable |
 | Validation d'adresse | `/address` | Normalisation et classification (US/PR uniquement) |
 
 ## Architecture
