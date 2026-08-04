@@ -1,6 +1,7 @@
 # UPS Frontend
 
-Interface web (Vite, JavaScript natif) pour piloter les APIs UPS via le projet `ups-backend`.
+Interface web React + TypeScript + Tailwind pour piloter les APIs UPS via le projet
+`ups-backend`. Reprend la charte et l'architecture Konitys (identique à `bornes_factory`).
 
 Aucun identifiant UPS ici : le frontend n'appelle que le backend.
 
@@ -8,49 +9,74 @@ Aucun identifiant UPS ici : le frontend n'appelle que le backend.
 
 ```bash
 npm install
-cp .env.example .env   # optionnel si le backend est sur localhost:3000
+cp .env.example .env
 npm run dev
 ```
 
-L'interface s'ouvre sur `http://localhost:5173`.
+L'interface démarre sur `http://localhost:5173`.
 
-> Le backend (`../ups-backend`) doit tourner en parallèle. Le badge en haut à droite
-> indique l'état de la connexion et de l'authentification UPS.
+> Le backend (`../ups-backend`) doit tourner en parallèle. Le badge dans la barre
+> supérieure indique l'état de la connexion et de l'authentification UPS.
 
 ## Configuration (.env)
 
 | Variable | Description |
 |---|---|
 | `VITE_API_URL` | URL du backend (défaut `http://localhost:3000`) |
+| `VITE_KEYCLOAK_URL` | Serveur Keycloak. **Laisser vide désactive l'authentification** (développement local) |
+| `VITE_KEYCLOAK_REALM` | Realm Keycloak (défaut `konitys`) |
+| `VITE_KEYCLOAK_CLIENT_ID` | Client Keycloak (défaut `ups-management`) |
+| `VITE_PLATEFORM_URL` | Host plateforme exposant HeaderBar/Sidebar via Module Federation. Vide → composants locaux |
+
+En production, ces variables sont injectées **au démarrage du conteneur** :
+les modifier ne demande pas de reconstruire l'image.
 
 ## Fonctionnalités
 
-| Onglet | Description |
-|---|---|
-| **Suivi de colis** | Recherche par numéro 1Z… avec chronologie des événements |
-| **Tarifs** | Comparaison des services UPS, multi-colis, tarifs négociés |
-| **Points relais** | Recherche d'UPS Access Points, horaires et lien carte |
-| **Validation d'adresse** | Normalisation et classification résidentiel/professionnel (US/PR) |
-| **Étiquettes** | Création d'expédition, aperçu et téléchargement, annulation |
+| Page | Route | Description |
+|---|---|---|
+| Suivi de colis | `/tracking` | Recherche par numéro 1Z… avec chronologie des événements |
+| Tarifs | `/rating` | Comparaison des services UPS, multi-colis, tarifs négociés |
+| Étiquettes | `/shipping` | Création d'expédition, aperçu, téléchargement, annulation |
+| Points relais | `/locator` | Recherche d'UPS Access Points, horaires, lien carte |
+| Validation d'adresse | `/address` | Normalisation et classification (US/PR uniquement) |
 
-## Structure
+## Architecture
 
 ```
 src/
-├── main.js              Onglets, routage par hash, badge de statut
-├── styles.css           Styles (charte UPS)
-├── lib/
-│   ├── api.js           Client HTTP vers le backend
-│   ├── ui.js            Helpers de rendu (échappement HTML, formats, formulaires)
-│   └── packages.js      Éditeur de colis partagé Tarifs / Étiquettes
-└── pages/               Une page par fonctionnalité
+├── main.tsx / App.tsx      Point d'entrée, routes, garde d'authentification
+├── config/
+│   ├── runtime.ts          Résolution runtime → build → repli
+│   └── keycloak.ts         Instance Keycloak
+├── contexts/AuthContext    Authentification et rafraîchissement du jeton
+├── remoteLoader.ts         Module Federation (composants de la plateforme)
+├── components/
+│   ├── layout/AppLayout    Coquille : header + sidebar (remote ou local)
+│   ├── Topbar / Sidebar    Composants locaux de repli
+│   ├── BackendStatus       Indicateur de connexion
+│   ├── PackagesEditor      Éditeur de colis partagé
+│   └── ui/                 Button, Card, Field, Alert, Badge, PageHeader
+├── pages/                  Une page par fonctionnalité
+├── services/api.ts         Client HTTP (joint le jeton Keycloak)
+└── types/ups.ts            Types des réponses backend
 ```
+
+**Intégration Konitys.** Le header et la sidebar sont chargés depuis la plateforme via
+Module Federation. Si elle est injoignable, un `RemoteErrorBoundary` bascule sur les
+composants locaux — visuellement identiques, l'application reste utilisable.
+
+## Prérequis Keycloak
+
+Le client `ups-management` doit exister dans le realm `konitys`, avec l'URL du
+frontend déclarée en *Valid Redirect URIs* et *Web Origins*.
 
 ## Build
 
 ```bash
-npm run build     # génère dist/
-npm run preview   # prévisualise le build
+npm run build      # typecheck (tsc -b) puis build Vite
+npm run typecheck  # typecheck seul
+npm run preview    # prévisualise le build
 ```
 
 ## Déploiement (Docker / Coolify)
@@ -60,16 +86,15 @@ docker build -t ups-frontend .
 docker run -p 8080:80 -e VITE_API_URL=https://api-ups.mondomaine.fr ups-frontend
 ```
 
-Sur Coolify : Build Pack **Dockerfile**, port `80`, variable `VITE_API_URL`.
+Sur Coolify : Build Pack **Dockerfile**, port `80`.
 
 L'image est construite en deux étapes (Node pour le build, Nginx pour le service).
-`VITE_API_URL` est injectée **au démarrage du conteneur** via `/config.js` : la modifier
-et redémarrer suffit, aucun rebuild n'est nécessaire.
+Les variables sont injectées au démarrage via `/config.js` — décochez
+« Build Variable » dans Coolify pour qu'elles soient lues au runtime.
 
 ## Notes
 
-- Les données affichées proviennent de l'API UPS et sont échappées avant insertion HTML.
-- Les étiquettes sont reçues en base64 : les GIF/PDF sont prévisualisés, tous les formats
-  (y compris ZPL) sont téléchargeables.
-- La navigation utilise le hash (`#tracking`, `#rating`, …), donc le bouton retour du
-  navigateur fonctionne.
+- Les étiquettes arrivent en base64 : GIF et PDF sont prévisualisés, tous les formats
+  (dont ZPL) sont téléchargeables.
+- `@tanstack/react-query` gère le cache et les états de chargement/erreur.
+- Le build échoue si le typecheck échoue — `tsc -b` s'exécute avant Vite.
