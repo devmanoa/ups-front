@@ -63,11 +63,12 @@ async function request<T>(path: string, { method = 'GET', body }: RequestOptions
   const data = await res.json().catch(() => null);
 
   if (!res.ok || data?.success === false) {
-    throw new ApiError(
-      data?.error?.message || `Erreur HTTP ${res.status}`,
-      data?.error?.code,
-      data?.error?.upsCodes
-    );
+    const upsCodes: string[] = data?.error?.upsCodes || [];
+    const base = data?.error?.message || `Erreur HTTP ${res.status}`;
+    // Le code UPS identifie la cause exacte (250002 = jeton refusé,
+    // 250003 = API non autorisée pour l'application…).
+    const message = upsCodes.length ? `${base} [UPS ${upsCodes.join(', ')}]` : base;
+    throw new ApiError(message, data?.error?.code, upsCodes);
   }
 
   return data.data as T;
