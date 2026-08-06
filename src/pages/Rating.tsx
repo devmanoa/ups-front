@@ -176,17 +176,36 @@ export default function Rating() {
             mutation.data.rates.length === 0 ? (
               <Alert type="info">Aucun tarif retourné pour cette destination.</Alert>
             ) : (
-              <Card>
-                <CardTitle
-                  title={`${mutation.data.rates.length} tarif(s)`}
-                  hint="Classés du moins cher au plus cher."
-                />
-                <div className="space-y-2">
-                  {mutation.data.rates.map((rate, i) => (
-                    <RateRow key={rate.serviceCode} rate={rate} best={i === 0} />
-                  ))}
-                </div>
-              </Card>
+              <div className="space-y-3">
+                <Card>
+                  <CardTitle
+                    title={`${mutation.data.rates.length} tarif(s)`}
+                    hint="Classés du moins cher au plus cher."
+                  />
+                  <div className="space-y-2">
+                    {mutation.data.rates.map((rate, i) => (
+                      <RateRow key={rate.serviceCode} rate={rate} best={i === 0} />
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Services écartés par UPS : informatif, les tarifs ci-dessus restent valides. */}
+                {mutation.data.warnings && mutation.data.warnings.length > 0 && (
+                  <details className="rounded-xl border border-[--k-border] bg-[--k-surface] px-3 py-2">
+                    <summary className="cursor-pointer text-[12px] font-medium text-[--k-muted]">
+                      {mutation.data.warnings.length} service(s) non applicable(s)
+                    </summary>
+                    <ul className="mt-2 space-y-1">
+                      {mutation.data.warnings.map((w, i) => (
+                        <li key={i} className="text-[12px] text-[--k-muted]">
+                          {w.message}
+                          {w.code && <span className="opacity-60"> (UPS {w.code})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
             )
           ) : (
             <EmptyState

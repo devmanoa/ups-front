@@ -66,6 +66,8 @@ export interface Rate {
 
 export interface RatingResult {
   rates: Rate[];
+  /** Services écartés par UPS (ex. Access Point sans point relais). */
+  warnings?: Array<{ code: string; message: string }>;
 }
 
 export interface AccessPointLocation {
