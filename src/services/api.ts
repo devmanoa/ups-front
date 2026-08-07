@@ -11,6 +11,14 @@ import type {
   TrackingResult,
   VoidResult,
   Address,
+  TransitResult,
+  LandedCostResult,
+  LandedCostItemInput,
+  PickupPiece,
+  PickupResult,
+  ContainerOption,
+  DocumentTypesResult,
+  UploadResult,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -104,6 +112,42 @@ export interface AddressPayload {
   requestOption?: number;
 }
 
+export interface TransitPayload {
+  shipFrom?: Address;
+  shipTo: Address;
+  weight: number;
+  weightUnit?: string;
+  shipDate?: string;
+  numberOfPackages?: number;
+  residential?: boolean;
+}
+
+export interface LandedCostPayload {
+  importCountryCode: string;
+  exportCountryCode: string;
+  items: LandedCostItemInput[];
+  currency?: string;
+}
+
+export interface PickupPayload {
+  address: Address;
+  pickupDate: string;
+  readyTime?: string;
+  closeTime?: string;
+  pieces: PickupPiece[];
+  contactName?: string;
+  companyName?: string;
+  phone?: string;
+  residential?: boolean;
+}
+
+export interface UploadPayload {
+  fileName: string;
+  fileFormat: string;
+  documentType?: string;
+  fileBase64: string;
+}
+
 export const api = {
   health: () => request<HealthResult>('/health'),
   testAuth: () => request<unknown>('/api/auth/test'),
@@ -124,6 +168,24 @@ export const api = {
 
   findAccessPoints: (payload: LocatorPayload) =>
     request<LocatorResult>('/api/locator/access-points', { method: 'POST', body: payload }),
+
+  getTransitTimes: (payload: TransitPayload) =>
+    request<TransitResult>('/api/transit-times', { method: 'POST', body: payload }),
+
+  getLandedCost: (payload: LandedCostPayload) =>
+    request<LandedCostResult>('/api/landed-cost', { method: 'POST', body: payload }),
+
+  getContainers: () => request<ContainerOption[]>('/api/pickup/containers'),
+  createPickup: (payload: PickupPayload) =>
+    request<PickupResult>('/api/pickup', { method: 'POST', body: payload }),
+  cancelPickup: (prn: string) =>
+    request<{ success: boolean; message: string }>(`/api/pickup/${encodeURIComponent(prn)}`, {
+      method: 'DELETE',
+    }),
+
+  getDocumentTypes: () => request<DocumentTypesResult>('/api/paperless/document-types'),
+  uploadDocument: (payload: UploadPayload) =>
+    request<UploadResult>('/api/paperless/upload', { method: 'POST', body: payload }),
 };
 
 export { API_URL };

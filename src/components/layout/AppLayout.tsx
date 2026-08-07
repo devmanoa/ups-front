@@ -1,6 +1,17 @@
 import React, { Component, Suspense, useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { PackageSearch, Calculator, MapPin, MapPinned, Tag } from 'lucide-react';
+import {
+  LayoutDashboard,
+  PackageSearch,
+  Calculator,
+  MapPin,
+  MapPinned,
+  Tag,
+  Truck,
+  Clock,
+  Globe,
+  FileText,
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { loadRemoteComponent } from '../../remoteLoader';
 import { Topbar } from '../Topbar';
@@ -24,11 +35,17 @@ const RemoteSidebar = React.lazy(() => loadRemoteComponent('./Sidebar'));
 // un mapping conditionnel.
 const SIDEBAR_SECTIONS = [
   {
+    label: 'Accueil',
+    items: [{ icon: LayoutDashboard, label: 'Tableau de bord', path: '/', to: '/' }],
+  },
+  {
     label: 'Expédition',
     items: [
       { icon: PackageSearch, label: 'Suivi de colis', path: '/tracking', to: '/tracking' },
       { icon: Calculator, label: 'Tarifs', path: '/rating', to: '/rating' },
+      { icon: Clock, label: 'Délais', path: '/transit-times', to: '/transit-times' },
       { icon: Tag, label: 'Étiquettes', path: '/shipping', to: '/shipping' },
+      { icon: Truck, label: 'Enlèvement', path: '/pickup', to: '/pickup' },
     ],
   },
   {
@@ -36,6 +53,13 @@ const SIDEBAR_SECTIONS = [
     items: [
       { icon: MapPin, label: 'Points relais', path: '/locator', to: '/locator' },
       { icon: MapPinned, label: 'Validation', path: '/address', to: '/address' },
+    ],
+  },
+  {
+    label: 'International',
+    items: [
+      { icon: Globe, label: "Coûts à l'import", path: '/landed-cost', to: '/landed-cost' },
+      { icon: FileText, label: 'Documents douaniers', path: '/paperless', to: '/paperless' },
     ],
   },
 ];

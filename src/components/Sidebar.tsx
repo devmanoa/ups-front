@@ -1,6 +1,20 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from './ui/cn';
-import { PackageSearch, Calculator, MapPin, MapPinned, Tag, ChevronsLeft, ChevronsRight, HelpCircle } from 'lucide-react';
+import {
+  LayoutDashboard,
+  PackageSearch,
+  Calculator,
+  MapPin,
+  MapPinned,
+  Tag,
+  Truck,
+  Clock,
+  Globe,
+  FileText,
+  ChevronsLeft,
+  ChevronsRight,
+  HelpCircle,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -23,11 +37,17 @@ interface SidebarSection {
 
 const DEFAULT_SECTIONS: SidebarSection[] = [
   {
+    label: 'Accueil',
+    items: [{ label: 'Tableau de bord', icon: LayoutDashboard, to: '/' }],
+  },
+  {
     label: 'Expédition',
     items: [
       { label: 'Suivi de colis', icon: PackageSearch, to: '/tracking' },
       { label: 'Tarifs', icon: Calculator, to: '/rating' },
+      { label: 'Délais', icon: Clock, to: '/transit-times' },
       { label: 'Étiquettes', icon: Tag, to: '/shipping' },
+      { label: 'Enlèvement', icon: Truck, to: '/pickup' },
     ],
   },
   {
@@ -35,6 +55,13 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
     items: [
       { label: 'Points relais', icon: MapPin, to: '/locator' },
       { label: 'Validation', icon: MapPinned, to: '/address' },
+    ],
+  },
+  {
+    label: 'International',
+    items: [
+      { label: "Coûts à l'import", icon: Globe, to: '/landed-cost' },
+      { label: 'Documents douaniers', icon: FileText, to: '/paperless' },
     ],
   },
 ];

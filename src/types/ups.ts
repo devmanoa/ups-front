@@ -126,6 +126,77 @@ export interface VoidResult {
   message: string;
 }
 
+export interface TransitService {
+  serviceCode: string;
+  serviceName: string;
+  businessDaysInTransit: number | null;
+  deliveryDate: string | null;
+  deliveryTime: string | null;
+  guaranteed: boolean;
+  pickupDate: string | null;
+  totalTransitDays: number | null;
+}
+
+export interface TransitResult {
+  services: TransitService[];
+}
+
+export interface LandedCostItem {
+  commodityId: string;
+  description: string;
+  quantity: number;
+  duties: number;
+  taxes: number;
+  totalCharges: number;
+}
+
+export interface LandedCostResult {
+  currency: string;
+  totalDuties: number;
+  totalTaxes: number;
+  totalFees: number;
+  grandTotal: number;
+  items: LandedCostItem[];
+}
+
+export interface LandedCostItemInput {
+  description?: string;
+  priceEach: string;
+  quantity: string;
+  hsCode?: string;
+  originCountryCode?: string;
+  weight?: string;
+}
+
+export interface PickupPiece {
+  serviceCode?: string;
+  quantity: string;
+  destinationCountry?: string;
+  containerCode?: string;
+}
+
+export interface PickupResult {
+  confirmationNumber: string;
+  charge: number | null;
+  currency: string | null;
+  readyTime: string | null;
+}
+
+export interface ContainerOption {
+  code: string;
+  name: string;
+}
+
+export interface DocumentTypesResult {
+  documentTypes: Array<{ code: string; name: string }>;
+  fileFormats: string[];
+}
+
+export interface UploadResult {
+  documentId: string;
+  status: string;
+}
+
 export interface HealthResult {
   status: string;
   environment: string;

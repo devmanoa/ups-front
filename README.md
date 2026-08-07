@@ -55,11 +55,20 @@ les modifier ne demande pas de reconstruire l'image.
 
 | Page | Route | Description |
 |---|---|---|
+| Tableau de bord | `/` | Accès rapide aux services et état de la connexion UPS |
 | Suivi de colis | `/tracking` | Recherche par numéro 1Z… avec chronologie des événements |
 | Tarifs | `/rating` | Comparaison des services UPS, multi-colis, tarifs négociés |
+| Délais | `/transit-times` | Temps d'acheminement estimés par service |
 | Étiquettes | `/shipping` | Création d'expédition, aperçu, téléchargement, annulation |
+| Enlèvement | `/pickup` | Planification et annulation du passage d'un chauffeur |
 | Points relais | `/locator` | Carte Google des UPS Access Points + liste synchronisée, horaires, ID copiable |
 | Validation d'adresse | `/address` | Normalisation et classification (US/PR uniquement) |
+| Coûts à l'import | `/landed-cost` | Droits de douane, taxes et frais pour l'international |
+| Documents douaniers | `/paperless` | Téléversement de factures commerciales dématérialisées |
+
+> Enlèvement, Coûts à l'import et Documents douaniers nécessitent `UPS_ACCOUNT_NUMBER`
+> côté backend. Chaque API doit aussi être souscrite pour votre application sur
+> developer.ups.com, sinon UPS renvoie l'erreur `250002`.
 
 ## Architecture
 

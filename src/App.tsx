@@ -3,11 +3,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppLayout from './components/layout/AppLayout';
+import Dashboard from './pages/Dashboard';
 import Tracking from './pages/Tracking';
 import Rating from './pages/Rating';
 import Shipping from './pages/Shipping';
 import Locator from './pages/Locator';
 import AddressValidation from './pages/AddressValidation';
+import TransitTimes from './pages/TransitTimes';
+import LandedCost from './pages/LandedCost';
+import Pickup from './pages/Pickup';
+import Paperless from './pages/Paperless';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,13 +41,17 @@ export default function App() {
           <Guard>
             <Routes>
               <Route element={<AppLayout />}>
-                <Route index element={<Navigate to="/tracking" replace />} />
+                <Route index element={<Dashboard />} />
                 <Route path="tracking" element={<Tracking />} />
                 <Route path="rating" element={<Rating />} />
+                <Route path="transit-times" element={<TransitTimes />} />
                 <Route path="shipping" element={<Shipping />} />
+                <Route path="pickup" element={<Pickup />} />
                 <Route path="locator" element={<Locator />} />
                 <Route path="address" element={<AddressValidation />} />
-                <Route path="*" element={<Navigate to="/tracking" replace />} />
+                <Route path="landed-cost" element={<LandedCost />} />
+                <Route path="paperless" element={<Paperless />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
           </Guard>
