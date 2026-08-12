@@ -23,6 +23,7 @@ import type {
   StoredLabel,
   RefreshStatusResult,
   SyncResult,
+  AnomaliesResult,
   BulkEntry,
   BulkResult,
 } from '../types/ups';
@@ -233,6 +234,8 @@ export const api = {
     }),
   syncShipments: () =>
     request<SyncResult>('/api/shipments/sync', { method: 'POST', body: {} }),
+  getAnomalies: (type?: string) =>
+    request<AnomaliesResult>(`/api/shipments/anomalies${type ? `?type=${type}` : ''}`),
 
   createBulkShipments: (payload: { shipments: BulkEntry[]; labelFormat?: string }) =>
     request<BulkResult>('/api/shipping/bulk', { method: 'POST', body: payload }),

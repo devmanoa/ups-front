@@ -227,6 +227,36 @@ export interface StoredShipment {
   voidedAt: string | null;
   batchId: string | null;
   createdAt: string;
+  expectedDelivery: string | null;
+  transitDays: number | null;
+  lastEventAt: string | null;
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+  anomalies?: Anomaly[];
+  hasAnomaly?: boolean;
+  primaryAnomaly?: Anomaly | null;
+}
+
+export type AnomalyType = 'delayed' | 'exception' | 'stalled' | 'never_picked_up';
+
+export interface Anomaly {
+  type: AnomalyType;
+  label: string;
+  detail: string;
+}
+
+export interface AnomaliesResult {
+  summary: {
+    counts: Record<AnomalyType, number>;
+    affected: number;
+    total: number;
+  };
+  shipments: StoredShipment[];
+  thresholds: {
+    stalledDays: number;
+    neverPickedUpDays: number;
+    fallbackDelayDays: number;
+  };
 }
 
 export interface ShipmentsListResult {

@@ -14,6 +14,7 @@ import {
   Package,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -83,6 +84,14 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
         icon: Package,
         color: 'text-sky-700',
         bg: 'bg-sky-50',
+      },
+      {
+        to: '/anomalies',
+        label: 'Anomalies',
+        description: 'Retards, incidents et colis immobiles',
+        icon: AlertTriangle,
+        color: 'text-red-700',
+        bg: 'bg-red-50',
       },
       {
         to: '/pickup',

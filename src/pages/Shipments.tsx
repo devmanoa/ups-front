@@ -322,6 +322,12 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
             <span className="font-mono text-[13px] font-medium text-[--k-text]">
               {shipment.trackingNumber || shipment.shipmentId}
             </span>
+            {shipment.primaryAnomaly && (
+              <Badge tone="warning">
+                <AlertTriangle className="h-3 w-3" />
+                {shipment.primaryAnomaly.label}
+              </Badge>
+            )}
             {shipment.batchId && <Badge tone="neutral">Lot</Badge>}
           </div>
 
