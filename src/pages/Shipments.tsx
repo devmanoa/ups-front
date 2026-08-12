@@ -185,7 +185,11 @@ export default function Shipments() {
         <Alert type="error" className="mb-4">
           {sync.error.message}
           <span className="mt-1 block text-[12px] opacity-80">
-            La synchronisation nécessite un abonnement Quantum View actif sur votre compte UPS.
+            {/* 250002 désigne une API non autorisée, malgré son libellé
+                « Invalid Authentication » qui évoque les identifiants. */}
+            {sync.error.message.includes('250002')
+              ? "L'API QuantumView n'est pas souscrite par votre application UPS. Ajoutez-la depuis developer.ups.com (Edit App), puis redémarrez le backend."
+              : 'La synchronisation nécessite un abonnement Quantum View actif sur votre compte UPS.'}{' '}
             Le bouton « Actualiser la page » reste utilisable.
           </span>
         </Alert>
