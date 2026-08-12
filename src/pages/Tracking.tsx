@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import {
   Search,
@@ -21,11 +22,20 @@ import Button from '../components/ui/Button';
 import { formatDate } from '../utils/format';
 
 export default function Tracking() {
-  const [trackingNumber, setTrackingNumber] = useState('');
+  const [searchParams] = useSearchParams();
+  const initial = searchParams.get('number') ?? '';
+  const [trackingNumber, setTrackingNumber] = useState(initial);
 
   const mutation = useMutation<TrackingResult, Error, string>({
     mutationFn: (value) => api.track(value),
   });
+
+  // Recherche automatique quand on arrive depuis la liste des envois.
+  useEffect(() => {
+    if (initial) mutation.mutate(initial);
+    // Volontairement limité au montage : relancer à chaque rendu bouclerait.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();

@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Tracking from './pages/Tracking';
 import Rating from './pages/Rating';
 import Shipping from './pages/Shipping';
+import Shipments from './pages/Shipments';
+import BulkShipping from './pages/BulkShipping';
 import Locator from './pages/Locator';
 import AddressValidation from './pages/AddressValidation';
 import TransitTimes from './pages/TransitTimes';
@@ -46,6 +48,8 @@ export default function App() {
                 <Route path="rating" element={<Rating />} />
                 <Route path="transit-times" element={<TransitTimes />} />
                 <Route path="shipping" element={<Shipping />} />
+                <Route path="shipping/bulk" element={<BulkShipping />} />
+                <Route path="shipments" element={<Shipments />} />
                 <Route path="pickup" element={<Pickup />} />
                 <Route path="locator" element={<Locator />} />
                 <Route path="address" element={<AddressValidation />} />

@@ -11,6 +11,8 @@ import {
   Clock,
   Globe,
   FileText,
+  Layers,
+  Package,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { loadRemoteComponent } from '../../remoteLoader';
@@ -45,6 +47,8 @@ const SIDEBAR_SECTIONS = [
       { icon: Calculator, label: 'Tarifs', path: '/rating', to: '/rating' },
       { icon: Clock, label: 'Délais', path: '/transit-times', to: '/transit-times' },
       { icon: Tag, label: 'Étiquettes', path: '/shipping', to: '/shipping' },
+      { icon: Layers, label: 'Envoi groupé', path: '/shipping/bulk', to: '/shipping/bulk' },
+      { icon: Package, label: 'Envois en cours', path: '/shipments', to: '/shipments' },
       { icon: Truck, label: 'Enlèvement', path: '/pickup', to: '/pickup' },
     ],
   },

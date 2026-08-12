@@ -11,6 +11,8 @@ import {
   Clock,
   Globe,
   FileText,
+  Layers,
+  Package,
   ChevronsLeft,
   ChevronsRight,
   HelpCircle,
@@ -47,6 +49,8 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
       { label: 'Tarifs', icon: Calculator, to: '/rating' },
       { label: 'Délais', icon: Clock, to: '/transit-times' },
       { label: 'Étiquettes', icon: Tag, to: '/shipping' },
+      { label: 'Envoi groupé', icon: Layers, to: '/shipping/bulk' },
+      { label: 'Envois en cours', icon: Package, to: '/shipments' },
       { label: 'Enlèvement', icon: Truck, to: '/pickup' },
     ],
   },
@@ -94,8 +98,17 @@ export function Sidebar({ collapsed, onToggle, sections = DEFAULT_SECTIONS }: Si
 
   function SidebarNavItem({ item }: { item: SidebarItem }) {
     const Icon = item.icon;
+    // Une autre entrée plus spécifique gagne la priorité : sans cela,
+    // "/shipping/bulk" activerait aussi "Étiquettes" (/shipping).
+    const moreSpecific = sections
+      .flatMap((s) => s.items)
+      .some((other) => other.to !== item.to && other.to.startsWith(`${item.to}/`) && location.pathname.startsWith(other.to));
+
     const isActive =
-      item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to);
+      item.to === '/'
+        ? location.pathname === '/'
+        : !moreSpecific &&
+          (location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
 
     const link = (
       <NavLink

@@ -197,6 +197,81 @@ export interface UploadResult {
   status: string;
 }
 
+export type ShipmentStatus = 'created' | 'in_transit' | 'delivered' | 'exception' | 'voided';
+
+export interface StoredShipment {
+  id: number;
+  shipmentId: string;
+  trackingNumber: string | null;
+  serviceCode: string | null;
+  serviceName: string | null;
+  recipient: {
+    name: string | null;
+    company: string | null;
+    address: string | null;
+    city: string | null;
+    postalCode: string | null;
+    country: string | null;
+  };
+  reference: string | null;
+  description: string | null;
+  totalCharges: number | null;
+  currency: string | null;
+  billingWeight: string | null;
+  labelFormat: string | null;
+  hasLabel: boolean;
+  accessPointId: string | null;
+  status: ShipmentStatus;
+  statusDescription: string | null;
+  statusCheckedAt: string | null;
+  voidedAt: string | null;
+  batchId: string | null;
+  createdAt: string;
+}
+
+export interface ShipmentsListResult {
+  total: number;
+  shipments: StoredShipment[];
+  limit: number;
+  offset: number;
+}
+
+export interface RefreshStatusResult {
+  results: Array<{
+    trackingNumber: string;
+    ok: boolean;
+    status?: ShipmentStatus;
+    description?: string;
+    error?: string;
+  }>;
+}
+
+export interface StoredLabel {
+  base64: string;
+  format: string;
+  trackingNumber: string;
+}
+
+export interface BulkEntry {
+  shipTo: Address;
+  packages: PackageInput[];
+  serviceCode?: string;
+  description?: string;
+}
+
+export interface BulkResult {
+  batchId: string;
+  created: number;
+  failed: number;
+  results: Array<{
+    index: number;
+    ok: boolean;
+    recipient?: string;
+    error?: string;
+    shipment?: ShipmentResult;
+  }>;
+}
+
 export interface HealthResult {
   status: string;
   environment: string;

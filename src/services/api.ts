@@ -19,6 +19,11 @@ import type {
   ContainerOption,
   DocumentTypesResult,
   UploadResult,
+  ShipmentsListResult,
+  StoredLabel,
+  RefreshStatusResult,
+  BulkEntry,
+  BulkResult,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -148,6 +153,15 @@ export interface UploadPayload {
   fileBase64: string;
 }
 
+export interface ShipmentsQuery {
+  search?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export const api = {
   health: () => request<HealthResult>('/health'),
   testAuth: () => request<unknown>('/api/auth/test'),
@@ -186,6 +200,25 @@ export const api = {
   getDocumentTypes: () => request<DocumentTypesResult>('/api/paperless/document-types'),
   uploadDocument: (payload: UploadPayload) =>
     request<UploadResult>('/api/paperless/upload', { method: 'POST', body: payload }),
+
+  listShipments: (params: ShipmentsQuery = {}) => {
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null && value !== '') qs.set(key, String(value));
+    }
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<ShipmentsListResult>(`/api/shipments${suffix}`);
+  },
+  getShipmentLabel: (trackingNumber: string) =>
+    request<StoredLabel>(`/api/shipments/${encodeURIComponent(trackingNumber)}/label`),
+  refreshShipmentStatus: (trackingNumbers: string[]) =>
+    request<RefreshStatusResult>('/api/shipments/refresh-status', {
+      method: 'POST',
+      body: { trackingNumbers },
+    }),
+
+  createBulkShipments: (payload: { shipments: BulkEntry[]; labelFormat?: string }) =>
+    request<BulkResult>('/api/shipping/bulk', { method: 'POST', body: payload }),
 };
 
 export { API_URL };
