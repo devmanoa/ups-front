@@ -164,9 +164,10 @@ export default function Dashboard() {
             Vérification de la connexion UPS…
           </span>
         ) : health.isError ? (
-          <span className="inline-flex items-center gap-2 text-[13px] text-[--k-danger]">
-            <AlertCircle className="h-4 w-4" />
-            Backend injoignable — vérifiez qu'il est démarré.
+          <span className="inline-flex items-start gap-2 text-[13px] text-[--k-danger]">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            {/* Le message porte la cause réelle : contenu mixte, CORS, DNS… */}
+            <span>{health.error.message}</span>
           </span>
         ) : (
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">

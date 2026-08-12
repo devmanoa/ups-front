@@ -28,9 +28,11 @@ export function BackendStatus() {
   if (isError) {
     tone = 'error';
     const message = error instanceof Error ? error.message : '';
-    label = message.includes('joindre le backend')
-      ? `Backend injoignable (${API_URL})`
-      : 'Authentification UPS échouée';
+    // NETWORK_ERROR : le navigateur n'a pas pu émettre la requête ; toute
+    // autre erreur signifie que le backend a répondu, donc qu'il est joignable.
+    const isNetwork =
+      (error as { code?: string })?.code === 'NETWORK_ERROR' || message.includes('impossible —');
+    label = isNetwork ? `Appel bloqué (${API_URL})` : 'Authentification UPS échouée';
   } else if (data) {
     tone = data.tone;
     label = data.label;

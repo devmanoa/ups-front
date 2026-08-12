@@ -32,11 +32,13 @@ export class ApiError extends Error {
   code?: string;
   upsCodes?: string[];
 
-  constructor(message: string, code?: string, upsCodes?: string[]) {
+  constructor(message: string, code?: string, upsCodes?: string[], cause?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
     this.upsCodes = upsCodes;
+    // Conserve l'erreur d'origine pour l'inspection en console.
+    if (cause !== undefined) this.cause = cause;
   }
 }
 
@@ -69,8 +71,18 @@ async function request<T>(path: string, { method = 'GET', body }: RequestOptions
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-  } catch {
-    throw new ApiError(`Impossible de joindre le backend (${API_URL}). Est-il démarré ?`);
+  } catch (cause) {
+    // fetch ne distingue pas les causes pour raison de sécurité : blocage CORS,
+    // contenu mixte, DNS, serveur éteint ou requête annulée donnent la même
+    // erreur. On signale les pistes plutôt que d'accuser le backend à tort.
+    const mixedContent =
+      window.location.protocol === 'https:' && API_URL.startsWith('http:');
+
+    const detail = mixedContent
+      ? "la page est en HTTPS et le backend en HTTP : le navigateur bloque l'appel"
+      : 'vérifiez la console du navigateur (CORS, DNS ou serveur indisponible)';
+
+    throw new ApiError(`Appel vers ${API_URL} impossible — ${detail}.`, 'NETWORK_ERROR', [], cause);
   }
 
   const data = await res.json().catch(() => null);
