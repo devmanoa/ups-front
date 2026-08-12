@@ -96,7 +96,9 @@ async function request<T>(path: string, { method = 'GET', body }: RequestOptions
     throw new ApiError(message, data?.error?.code, upsCodes);
   }
 
-  return data.data as T;
+  // Les routes /api/* renvoient { success, data }, mais /health répond
+  // directement à la racine : sans ce repli, data.data vaudrait undefined.
+  return (data && typeof data === 'object' && 'data' in data ? data.data : data) as T;
 }
 
 export interface RatePayload {
