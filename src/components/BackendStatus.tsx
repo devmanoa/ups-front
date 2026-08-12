@@ -8,13 +8,24 @@ import { cn } from './ui/cn';
  */
 export function BackendStatus() {
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['backend-status'],
+    // Clé distincte de celle du tableau de bord : ce composant dérive un
+    // libellé, l'autre a besoin de la réponse /health complète. Une clé
+    // partagée ferait lire à l'un le cache de l'autre.
+    queryKey: ['backend-status-badge'],
     queryFn: async () => {
       const health = await api.health();
       if (!health.credentialsConfigured) {
         return { tone: 'warning' as const, label: 'Identifiants UPS manquants' };
       }
-      await api.testAuth();
+
+      // L'échec de l'authentification ne doit pas masquer le fait que le
+      // backend répond : on le signale sans faire échouer la requête.
+      try {
+        await api.testAuth();
+      } catch {
+        return { tone: 'warning' as const, label: 'Authentification UPS refusée' };
+      }
+
       return { tone: 'ok' as const, label: `Connecté — ${health.environment}` };
     },
     // Le statut peut changer sans action de l'utilisateur (backend redémarré).

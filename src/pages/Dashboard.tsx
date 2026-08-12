@@ -142,7 +142,7 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const health = useQuery({
-    queryKey: ['backend-status'],
+    queryKey: ['health'],
     queryFn: () => api.health(),
     retry: false,
   });
