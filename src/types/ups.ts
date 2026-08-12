@@ -246,6 +246,15 @@ export interface RefreshStatusResult {
   }>;
 }
 
+export interface SyncResult {
+  eventsRead: number;
+  pagesRead: number;
+  hasMore: boolean;
+  updated: number;
+  ignored: number;
+  details: Array<{ trackingNumber: string; status: ShipmentStatus; description: string }>;
+}
+
 export interface StoredLabel {
   base64: string;
   format: string;

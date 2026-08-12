@@ -22,6 +22,7 @@ import type {
   ShipmentsListResult,
   StoredLabel,
   RefreshStatusResult,
+  SyncResult,
   BulkEntry,
   BulkResult,
 } from '../types/ups';
@@ -230,6 +231,8 @@ export const api = {
       method: 'POST',
       body: { trackingNumbers },
     }),
+  syncShipments: () =>
+    request<SyncResult>('/api/shipments/sync', { method: 'POST', body: {} }),
 
   createBulkShipments: (payload: { shipments: BulkEntry[]; labelFormat?: string }) =>
     request<BulkResult>('/api/shipping/bulk', { method: 'POST', body: payload }),

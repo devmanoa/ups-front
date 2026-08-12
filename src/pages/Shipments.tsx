@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Package,
   RefreshCw,
+  RadioTower,
   Download,
   XCircle,
   ExternalLink,
@@ -72,6 +73,13 @@ export default function Shipments() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shipments'] }),
   });
 
+  // Synchronisation globale via QuantumView : un seul appel UPS couvre tous
+  // les colis récents, sans dépendre de la page affichée.
+  const sync = useMutation({
+    mutationFn: () => api.syncShipments(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shipments'] }),
+  });
+
   /** Filtre appliqué : réinitialise la pagination pour éviter une page vide. */
   const applyFilter = (fn: () => void) => {
     fn();
@@ -98,12 +106,24 @@ export default function Shipments() {
               type="button"
               variant="secondary"
               size="sm"
+              isLoading={sync.isPending}
+              onClick={() => sync.mutate()}
+              title="Un seul appel UPS pour tous les colis récents (QuantumView)"
+            >
+              {!sync.isPending && <RadioTower className="h-4 w-4" />}
+              Synchroniser
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               isLoading={refresh.isPending}
               disabled={refreshable.length === 0}
               onClick={() => refresh.mutate(refreshable)}
+              title="Interroge le suivi colis par colis, pour la page affichée"
             >
               {!refresh.isPending && <RefreshCw className="h-4 w-4" />}
-              Actualiser les statuts
+              Actualiser la page
             </Button>
             <Link to="/shipping">
               <Button type="button" size="sm">
@@ -158,6 +178,24 @@ export default function Shipments() {
           {refresh.data.results.filter((r) => r.ok).length} statut(s) mis à jour
           {refresh.data.results.some((r) => !r.ok) &&
             ` — ${refresh.data.results.filter((r) => !r.ok).length} en échec`}
+        </Alert>
+      )}
+
+      {sync.isError && (
+        <Alert type="error" className="mb-4">
+          {sync.error.message}
+          <span className="mt-1 block text-[12px] opacity-80">
+            La synchronisation nécessite un abonnement Quantum View actif sur votre compte UPS.
+            Le bouton « Actualiser la page » reste utilisable.
+          </span>
+        </Alert>
+      )}
+
+      {sync.isSuccess && (
+        <Alert type={sync.data.updated > 0 ? 'success' : 'info'} className="mb-4">
+          {sync.data.eventsRead} événement(s) reçu(s) — {sync.data.updated} envoi(s) mis à jour
+          {sync.data.ignored > 0 && `, ${sync.data.ignored} hors historique`}
+          {sync.data.hasMore && ' (données supplémentaires disponibles)'}
         </Alert>
       )}
 
