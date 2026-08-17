@@ -43,6 +43,20 @@ export default function Tracking() {
     if (value) mutation.mutate(value);
   };
 
+  /**
+   * Numéro réellement renvoyé par UPS s'il diffère de celui demandé.
+   * La comparaison ignore casse et espaces : seule une vraie divergence
+   * de numéro doit déclencher l'avertissement.
+   */
+  const normalize = (v: string) => v.replace(/\s+/g, '').toUpperCase();
+  const returnedNumber = mutation.data?.packages[0]?.trackingNumber;
+  const mismatchedNumber =
+    mutation.isSuccess && returnedNumber && mutation.variables
+      ? normalize(returnedNumber) !== normalize(mutation.variables)
+        ? returnedNumber
+        : null
+      : null;
+
   return (
     <div>
       <PageHeader
@@ -73,6 +87,19 @@ export default function Tracking() {
 
       {mutation.isSuccess && mutation.data.packages.length === 0 && (
         <Alert type="info">Aucun colis trouvé pour ce numéro.</Alert>
+      )}
+
+      {/* UPS renvoie un colis de démonstration quand le numéro n'existe pas.
+          Sans avertissement, l'utilisateur prendrait ces données pour les
+          siennes après une simple faute de frappe. */}
+      {mismatchedNumber && (
+        <Alert type="info" className="mb-4">
+          UPS a répondu pour le numéro <strong>{mismatchedNumber}</strong>, différent de celui
+          saisi (<strong>{mutation.variables}</strong>).
+          <span className="mt-1 block text-[12px] opacity-80">
+            Vérifiez votre saisie : les informations ci-dessous concernent un autre colis.
+          </span>
+        </Alert>
       )}
 
       {mutation.isIdle && (
