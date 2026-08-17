@@ -61,7 +61,7 @@ export default function LandedCost() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Coûts à l'import"
         subtitle="Estimez droits de douane, taxes et frais pour une expédition internationale."

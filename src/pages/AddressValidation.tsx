@@ -44,7 +44,7 @@ export default function AddressValidation() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Validation d'adresse"
         subtitle="Vérifie et normalise une adresse, et indique si elle est résidentielle ou professionnelle."

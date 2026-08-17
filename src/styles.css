@@ -49,6 +49,28 @@ body {
 }
 
 /* Étiquette d'expédition : fond blanc garanti quel que soit le format d'image. */
+/* ─── InfoWindow Google Maps ──────────────────────────────────────────────
+ *
+ * Google enveloppe le contenu dans plusieurs div qu'il dimensionne lui-même,
+ * ce qui produit une barre de défilement horizontale dès que le contenu
+ * approche la largeur allouée. On neutralise ce comportement : notre bloc
+ * gère déjà sa propre largeur et son défilement vertical.
+ */
+.gm-style-iw-c {
+  padding: 12px !important;
+}
+
+.gm-style-iw-d {
+  overflow: hidden !important;
+  max-height: none !important;
+}
+
+/* Bouton de fermeture : le ramène dans l'angle sans chevaucher le contenu. */
+.gm-style-iw-c button.gm-ui-hover-effect {
+  top: 0 !important;
+  right: 0 !important;
+}
+
 .label-preview {
   max-width: 340px;
   border: 1px solid var(--k-border);

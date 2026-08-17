@@ -96,7 +96,7 @@ export default function Shipments() {
     .slice(0, 50);
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Envois en cours"
         subtitle="Historique de vos expéditions et suivi de leur acheminement."

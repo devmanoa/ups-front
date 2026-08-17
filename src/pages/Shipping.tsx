@@ -74,7 +74,7 @@ export default function Shipping() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Création d'étiquette"
         subtitle="Crée une expédition sur le compte UPS configuré et génère l'étiquette."

@@ -149,7 +149,7 @@ export default function BulkShipping() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Envoi groupé"
         subtitle="Créez plusieurs expéditions en une seule fois, à la main ou depuis un fichier CSV."

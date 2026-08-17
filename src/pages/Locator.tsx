@@ -66,7 +66,7 @@ export default function Locator() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Points relais"
         subtitle="Recherchez les UPS Access Points autour d'une adresse de livraison."
@@ -156,14 +156,14 @@ export default function Locator() {
             ) : (
               /* Carte et liste côte à côte, à hauteur égale : la liste défile
                  sans entraîner la carte. */
-              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
                 <AccessPointsMap
                   locations={mutation.data.locations}
                   activeIndex={activeIndex}
                   onActivate={activateFromMap}
                 />
 
-                <div className="flex min-h-0 flex-col xl:h-[520px]">
+                <div className="flex min-h-0 flex-col xl:h-[600px]">
                   <p className="mb-2 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-[--k-muted]">
                     {mutation.data.locations.length} point(s) — du plus proche au plus éloigné
                   </p>

@@ -58,7 +58,7 @@ export default function Rating() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Calcul de tarifs"
         subtitle="Comparez les services UPS disponibles pour une destination."

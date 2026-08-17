@@ -44,7 +44,7 @@ export default function Tracking() {
   };
 
   return (
-    <div className="max-w-[1000px]">
+    <div>
       <PageHeader
         title="Suivi de colis"
         subtitle="Recherchez un colis par son numéro de suivi UPS."

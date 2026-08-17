@@ -108,7 +108,7 @@ export default function Paperless() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Documents douaniers"
         subtitle="Téléversez vos factures commerciales et documents douaniers dématérialisés."

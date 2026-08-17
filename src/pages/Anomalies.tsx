@@ -64,7 +64,7 @@ export default function Anomalies() {
   });
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Anomalies"
         subtitle="Envois nécessitant votre attention : retards, incidents et colis immobiles."

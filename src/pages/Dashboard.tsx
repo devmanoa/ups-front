@@ -159,7 +159,7 @@ export default function Dashboard() {
   const firstName = user?.firstName || user?.fullName?.split(' ')[0];
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title={firstName ? `Bonjour ${firstName}` : 'Tableau de bord'}
         subtitle="Accédez aux services UPS depuis un point unique."

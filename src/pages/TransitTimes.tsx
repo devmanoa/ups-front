@@ -51,7 +51,7 @@ export default function TransitTimes() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Délais de livraison"
         subtitle="Estimez les délais d'acheminement UPS entre votre adresse d'expédition et une destination."

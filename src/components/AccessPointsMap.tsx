@@ -70,7 +70,8 @@ function infoWindowHtml(loc: AccessPointLocation, index: number): string {
   const idLine = loc.publicAccessPointId || loc.locationId;
 
   return `
-    <div style="font-family:'Segoe UI',system-ui,sans-serif;width:290px;padding:2px 4px 4px">
+    <div style="font-family:'Segoe UI',system-ui,sans-serif;box-sizing:border-box;
+                width:288px;max-width:100%;overflow:hidden;padding:2px 2px 4px">
       ${photo}
 
       <div style="display:flex;align-items:flex-start;gap:7px">
@@ -121,10 +122,12 @@ function infoWindowHtml(loc: AccessPointLocation, index: number): string {
                          font-family:inherit">Services</button>
         </div>
 
-        <div id="${uid}-h" style="font-size:11px;color:#5E6A82;max-height:104px;overflow-y:auto">
+        <div id="${uid}-h" style="font-size:11px;color:#5E6A82;max-height:104px;overflow-y:auto;overflow-x:hidden;
+                    word-break:break-word;line-height:1.45">
           ${hoursRows || '<div style="opacity:.6">Horaires non communiqués.</div>'}
         </div>
-        <div id="${uid}-s" style="display:none;font-size:11px;color:#5E6A82;max-height:104px;overflow-y:auto">
+        <div id="${uid}-s" style="display:none;font-size:11px;color:#5E6A82;max-height:104px;overflow-y:auto;overflow-x:hidden;
+                    word-break:break-word;line-height:1.45">
           ${servicesRows}
         </div>
       </div>
@@ -292,7 +295,7 @@ export function AccessPointsMap({ locations, activeIndex, onActivate }: AccessPo
   return (
     <div className="relative overflow-hidden rounded-xl border border-[--k-border]">
       {/* Hauteur alignée sur celle de la liste voisine, pour un bloc homogène. */}
-      <div ref={containerRef} className="h-[420px] w-full bg-[--k-surface-2] xl:h-[520px]" />
+      <div ref={containerRef} className="h-[420px] w-full bg-[--k-surface-2] xl:h-[600px]" />
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[--k-surface-2] text-[13px] text-[--k-muted]">
           <Loader2 className="h-4 w-4 animate-spin" />

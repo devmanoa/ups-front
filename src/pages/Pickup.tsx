@@ -84,7 +84,7 @@ export default function Pickup() {
   };
 
   return (
-    <div className="max-w-[1400px]">
+    <div>
       <PageHeader
         title="Enlèvement à domicile"
         subtitle="Planifiez le passage d'un chauffeur UPS pour récupérer vos colis."
