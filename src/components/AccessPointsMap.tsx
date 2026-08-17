@@ -19,57 +19,135 @@ function esc(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/**
+ * Contenu de l'infobulle, calqué sur celle du CRM : photo de la façade,
+ * coordonnées, puis onglets Horaires / Services.
+ *
+ * L'InfoWindow de Google reçoit du HTML brut : les valeurs venant de l'API
+ * UPS sont donc toutes échappées, et les onglets basculent par un onclick
+ * inline puisqu'aucun React ne vit dans ce fragment.
+ */
 function infoWindowHtml(loc: AccessPointLocation, index: number): string {
-  const address = [...loc.addressLines, loc.postalCode, loc.city].filter(Boolean).join(', ');
+  const uid = `apw-${index}`;
+  const address = [...loc.addressLines].filter(Boolean).join(', ');
+  const cityLine = [loc.postalCode, loc.city].filter(Boolean).join(' ');
 
-  const hours = loc.openingHours.length
-    ? `<div style="margin-top:8px;border-top:1px solid #D6DFED;padding-top:6px;
-                  display:grid;grid-template-columns:repeat(2,auto);gap:2px 12px;font-size:11px;color:#5E6A82">
-         ${loc.openingHours
-           .map(
-             (h) =>
-               `<div><strong>${esc(h.day.slice(0, 3))}</strong> ${esc(h.hours)}</div>`
-           )
-           .join('')}
+  // Grille structurée en priorité ; texte libre UPS en repli.
+  const hoursRows = loc.openingHours.length
+    ? loc.openingHours
+        .map(
+          (h) =>
+            `<div style="display:flex;justify-content:space-between;gap:12px">
+               <span style="font-weight:600">${esc(h.day)}</span>
+               <span${h.closed ? ' style="opacity:.55"' : ''}>${esc(h.hours)}</span>
+             </div>`,
+        )
+        .join('')
+    : loc.hoursText.map((line) => `<div>${esc(line)}</div>`).join('');
+
+  const servicesRows = loc.services.length
+    ? loc.services.map((s) => `<div>• ${esc(s)}</div>`).join('')
+    : '<div style="opacity:.6">Aucun service détaillé.</div>';
+
+  const photo = loc.imageUrl
+    ? `<img src="${esc(loc.imageUrl)}" alt="" loading="lazy"
+            style="width:100%;height:96px;object-fit:cover;border-radius:8px;margin-bottom:8px" />`
+    : '';
+
+  const promos = loc.promotions.length
+    ? `<div style="margin-top:6px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;
+                   padding:4px 8px;font-size:11px;color:#9A3412">
+         ${loc.promotions.map((p) => esc(p)).join('<br>')}
        </div>`
     : '';
 
-  const maps =
-    loc.latitude != null && loc.longitude != null
-      ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}"
-            target="_blank" rel="noopener"
-            style="display:inline-block;margin-top:8px;font-size:12px;color:#4F46E5;text-decoration:none">
-           Itinéraire →
-         </a>`
-      : '';
+  const comments = loc.comments
+    ? `<div style="margin-top:6px;font-size:11px;color:#5E6A82;font-style:italic">
+         ${esc(loc.comments)}
+       </div>`
+    : '';
+
+  const idLine = loc.publicAccessPointId || loc.locationId;
 
   return `
-    <div style="font-family:'Segoe UI',system-ui,sans-serif;max-width:260px;padding:2px 4px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-        <span style="display:inline-flex;align-items:center;justify-content:center;
-                     width:18px;height:18px;border-radius:6px;background:#4F46E5;
-                     color:#fff;font-size:11px;font-weight:700">${index + 1}</span>
-        <strong style="font-size:13px;color:#1A1D2B">${esc(loc.name || 'Point relais')}</strong>
+    <div style="font-family:'Segoe UI',system-ui,sans-serif;width:290px;padding:2px 4px 4px">
+      ${photo}
+
+      <div style="display:flex;align-items:flex-start;gap:7px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;flex:none;
+                     width:19px;height:19px;border-radius:6px;background:#4F46E5;
+                     color:#fff;font-size:11px;font-weight:700;margin-top:1px">${index + 1}</span>
+        <div style="min-width:0;flex:1">
+          <strong style="font-size:13px;color:#1A1D2B;display:block">
+            ${esc(loc.name || 'Point relais')}
+          </strong>
+          <div style="font-size:12px;color:#5E6A82;margin-top:1px">
+            ${esc(address)}${cityLine ? `<br>${esc(cityLine)}` : ''}
+          </div>
+          ${loc.phone ? `<div style="font-size:12px;color:#5E6A82;margin-top:2px">Tél. ${esc(loc.phone)}</div>` : ''}
+        </div>
+        ${
+          loc.distance
+            ? `<span style="flex:none;background:#EEF2FF;color:#4F46E5;border-radius:6px;
+                            padding:1px 6px;font-size:11px;font-weight:600;white-space:nowrap">
+                 ${esc(String(loc.distance.value))} ${esc(loc.distance.unit)}
+               </span>`
+            : ''
+        }
       </div>
-      <div style="font-size:12px;color:#5E6A82">${esc(address)}</div>
-      ${loc.phone ? `<div style="font-size:12px;color:#5E6A82;margin-top:2px">${esc(loc.phone)}</div>` : ''}
-      ${
-        loc.distance
-          ? `<div style="margin-top:6px;display:inline-block;background:#EEF2FF;color:#4F46E5;
-                        border-radius:6px;padding:1px 6px;font-size:11px;font-weight:600">
-               ${esc(String(loc.distance.value))} ${esc(loc.distance.unit)}
-             </div>`
-          : ''
-      }
-      ${
-        loc.locationId
-          ? `<div style="margin-top:6px;font-size:11px;color:#5E6A82">
-               ID : <code style="background:#E3EAF5;padding:1px 4px;border-radius:4px">${esc(loc.locationId)}</code>
-             </div>`
-          : ''
-      }
-      ${hours}
-      ${maps}
+
+      ${comments}
+      ${promos}
+
+      <div style="margin-top:8px;border-top:1px solid #D6DFED;padding-top:6px">
+        <div style="display:flex;gap:4px;margin-bottom:5px">
+          <button type="button" id="${uid}-tab-h"
+                  onclick="document.getElementById('${uid}-h').style.display='block';
+                           document.getElementById('${uid}-s').style.display='none';
+                           this.style.background='#EEF2FF';this.style.color='#4F46E5';
+                           document.getElementById('${uid}-tab-s').style.background='transparent';
+                           document.getElementById('${uid}-tab-s').style.color='#5E6A82';"
+                  style="flex:1;border:none;border-radius:6px;padding:3px 6px;font-size:11px;
+                         font-weight:600;cursor:pointer;background:#EEF2FF;color:#4F46E5;
+                         font-family:inherit">Horaires</button>
+          <button type="button" id="${uid}-tab-s"
+                  onclick="document.getElementById('${uid}-s').style.display='block';
+                           document.getElementById('${uid}-h').style.display='none';
+                           this.style.background='#EEF2FF';this.style.color='#4F46E5';
+                           document.getElementById('${uid}-tab-h').style.background='transparent';
+                           document.getElementById('${uid}-tab-h').style.color='#5E6A82';"
+                  style="flex:1;border:none;border-radius:6px;padding:3px 6px;font-size:11px;
+                         font-weight:600;cursor:pointer;background:transparent;color:#5E6A82;
+                         font-family:inherit">Services</button>
+        </div>
+
+        <div id="${uid}-h" style="font-size:11px;color:#5E6A82;max-height:104px;overflow-y:auto">
+          ${hoursRows || '<div style="opacity:.6">Horaires non communiqués.</div>'}
+        </div>
+        <div id="${uid}-s" style="display:none;font-size:11px;color:#5E6A82;max-height:104px;overflow-y:auto">
+          ${servicesRows}
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;
+                  margin-top:8px;border-top:1px solid #D6DFED;padding-top:6px">
+        ${
+          idLine
+            ? `<span style="font-size:10px;color:#5E6A82">ID
+                 <code style="background:#E3EAF5;padding:1px 4px;border-radius:4px">${esc(idLine)}</code>
+               </span>`
+            : '<span></span>'
+        }
+        ${
+          loc.latitude != null && loc.longitude != null
+            ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}"
+                  target="_blank" rel="noopener"
+                  style="font-size:11px;color:#4F46E5;text-decoration:none;font-weight:600;white-space:nowrap">
+                 Itinéraire →
+               </a>`
+            : ''
+        }
+      </div>
     </div>`;
 }
 

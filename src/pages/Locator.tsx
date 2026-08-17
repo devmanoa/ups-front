@@ -208,12 +208,16 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
   const [copied, setCopied] = useState(false);
   const address = [...loc.addressLines, loc.postalCode, loc.city].filter(Boolean).join(', ');
 
-  // L'ID du point relais alimente le champ « ID point relais » de la page Étiquettes.
+  // L'ID public est celui à communiquer au destinataire ; on retombe sur le
+  // LocationID quand UPS ne le fournit pas.
+  const displayId = loc.publicAccessPointId || loc.locationId;
+
+  // Cet ID alimente le champ « ID point relais » de la page Étiquettes.
   const copyId = async (e: MouseEvent<HTMLButtonElement>) => {
     // Sans cela, le clic sélectionnerait aussi la ligne.
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(loc.locationId);
+      await navigator.clipboard.writeText(displayId);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -232,6 +236,20 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
           : 'border-[--k-border] hover:border-[--k-primary]/30'
       }`}
     >
+      {/* Photo de la façade : permet de reconnaître le commerce sur place. */}
+      {loc.imageUrl && (
+        <img
+          src={loc.imageUrl}
+          alt=""
+          loading="lazy"
+          className="mb-2 h-20 w-full rounded-lg object-cover"
+          // Une URL UPS cassée laisserait un cadre vide : on retire l'image.
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      )}
+
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-[--k-text]">
           <span
@@ -252,6 +270,16 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
 
       <p className="mt-1 text-[12px] text-[--k-muted]">{address}</p>
 
+      {loc.comments && (
+        <p className="mt-1 text-[11px] italic text-[--k-muted]">{loc.comments}</p>
+      )}
+
+      {loc.promotions.length > 0 && (
+        <div className="mt-1.5 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] text-orange-800">
+          {loc.promotions.join(' · ')}
+        </div>
+      )}
+
       <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[12px]">
         {loc.phone && (
           <span className="inline-flex items-center gap-1 text-[--k-muted]">
@@ -259,7 +287,7 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
             {loc.phone}
           </span>
         )}
-        {loc.locationId && (
+        {displayId && (
           <button
             type="button"
             onClick={copyId}
@@ -267,9 +295,7 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
             title="Copier l'ID pour créer une étiquette vers ce point relais"
           >
             {copied ? <Check className="h-3 w-3 text-[--k-success]" /> : <Copy className="h-3 w-3" />}
-            <code className="rounded bg-[--k-surface-2] px-1 py-0.5 text-[11px]">
-              {loc.locationId}
-            </code>
+            <code className="rounded bg-[--k-surface-2] px-1 py-0.5 text-[11px]">{displayId}</code>
           </button>
         )}
         {loc.latitude != null && loc.longitude != null && (
@@ -286,14 +312,40 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
         )}
       </div>
 
-      {loc.openingHours.length > 0 && (
-        <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-[--k-border] pt-2.5 text-[12px] sm:grid-cols-4">
+      {/* Grille structurée en priorité ; texte libre UPS en repli. */}
+      {loc.openingHours.length > 0 ? (
+        <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-[--k-border] pt-2.5 text-[12px]">
           {loc.openingHours.map((h) => (
             <div key={h.day} className={h.closed ? 'text-[--k-muted]/60' : 'text-[--k-muted]'}>
               <span className="font-medium">{h.day.slice(0, 3)}</span> {h.hours}
             </div>
           ))}
         </div>
+      ) : loc.hoursText.length > 0 ? (
+        <div className="mt-2.5 border-t border-[--k-border] pt-2.5 text-[12px] text-[--k-muted]">
+          {loc.hoursText.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      ) : null}
+
+      {loc.services.length > 0 && (
+        <details className="mt-2 border-t border-[--k-border] pt-2">
+          <summary
+            className="cursor-pointer text-[11px] font-medium text-[--k-muted]"
+            // Le dépliage ne doit pas changer la sélection courante.
+            onClick={(e) => e.stopPropagation()}
+          >
+            {loc.services.length} service(s) proposé(s)
+          </summary>
+          <div className="mt-1 space-y-0.5">
+            {loc.services.map((s, i) => (
+              <div key={i} className="text-[11px] text-[--k-muted]">
+                • {s}
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );

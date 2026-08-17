@@ -85,6 +85,16 @@ export interface AccessPointLocation {
   isAccessPoint: boolean;
   accessPointStatus: string | null;
   openingHours: Array<{ day: string; closed: boolean; hours: string }>;
+  /** Photo de la façade du commerce. */
+  imageUrl: string | null;
+  /** Identifiant à communiquer au destinataire. */
+  publicAccessPointId: string | null;
+  /** Horaires en texte libre, repli quand la grille est absente. */
+  hoursText: string[];
+  services: string[];
+  /** Indications d'accès (étage, entrée…). */
+  comments: string | null;
+  promotions: string[];
 }
 
 export interface LocatorResult {
