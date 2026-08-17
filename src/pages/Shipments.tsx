@@ -40,6 +40,23 @@ const STATUS_META: Record<
   voided: { label: 'Annulé', tone: 'danger', icon: Ban },
 };
 
+/**
+ * Traduit les codes d'erreur QuantumView en action concrète.
+ *
+ * Deux échecs distincts se ressemblent à l'usage : l'API non souscrite
+ * (250002) et les abonnements Quantum View inactifs (330052). Le second se
+ * règle sur ups.com, pas sur developer.ups.com — d'où cette distinction.
+ */
+function syncHint(message: string): string {
+  if (message.includes('250002')) {
+    return "L'API QuantumView n'est pas souscrite par votre application UPS. Ajoutez-la depuis developer.ups.com (Edit App), puis redémarrez le backend.";
+  }
+  if (message.includes('330052')) {
+    return "Votre compte a bien QuantumView, mais le service Quantum View Data (QVD) n'est pas activé — c'est lui qui produit les fichiers lus par cette API, distinct de Quantum View Manage consulté sur ups.com. Demandez son activation à votre contact UPS, puis comptez jusqu'à 24 h avant le premier fichier.";
+  }
+  return 'La synchronisation nécessite un abonnement Quantum View actif sur votre compte UPS.';
+}
+
 export default function Shipments() {
   const queryClient = useQueryClient();
 
@@ -185,12 +202,7 @@ export default function Shipments() {
         <Alert type="error" className="mb-4">
           {sync.error.message}
           <span className="mt-1 block text-[12px] opacity-80">
-            {/* 250002 désigne une API non autorisée, malgré son libellé
-                « Invalid Authentication » qui évoque les identifiants. */}
-            {sync.error.message.includes('250002')
-              ? "L'API QuantumView n'est pas souscrite par votre application UPS. Ajoutez-la depuis developer.ups.com (Edit App), puis redémarrez le backend."
-              : 'La synchronisation nécessite un abonnement Quantum View actif sur votre compte UPS.'}{' '}
-            Le bouton « Actualiser la page » reste utilisable.
+            {syncHint(sync.error.message)} Le bouton « Actualiser la page » reste utilisable.
           </span>
         </Alert>
       )}
