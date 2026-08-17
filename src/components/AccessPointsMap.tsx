@@ -213,7 +213,8 @@ export function AccessPointsMap({ locations, activeIndex, onActivate }: AccessPo
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-[--k-border]">
-      <div ref={containerRef} className="h-[380px] w-full bg-[--k-surface-2]" />
+      {/* Hauteur alignée sur celle de la liste voisine, pour un bloc homogène. */}
+      <div ref={containerRef} className="h-[420px] w-full bg-[--k-surface-2] xl:h-[520px]" />
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[--k-surface-2] text-[13px] text-[--k-muted]">
           <Loader2 className="h-4 w-4 animate-spin" />

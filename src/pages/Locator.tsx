@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type MouseEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent, type MouseEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Search, ExternalLink, Phone, Copy, Check, Navigation } from 'lucide-react';
 import { api, type LocatorPayload } from '../services/api';
@@ -20,6 +20,28 @@ export default function Locator() {
   const [maxResults, setMaxResults] = useState('10');
   /** Point relais mis en avant, partagé entre la carte et la liste. */
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  /** Distingue un clic sur la carte d'un survol dans la liste. */
+  const [scrollToActive, setScrollToActive] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Amène la ligne active dans la vue lorsqu'elle a été choisie depuis la
+   * carte. On ne défile pas sur un survol de la liste : le pointeur y est
+   * déjà, et déplacer le contenu sous le curseur serait déroutant.
+   */
+  useEffect(() => {
+    if (!scrollToActive || activeIndex === null || !listRef.current) return;
+
+    const row = listRef.current.querySelector<HTMLElement>(`[data-row="${activeIndex}"]`);
+    row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setScrollToActive(false);
+  }, [activeIndex, scrollToActive]);
+
+  /** Sélection depuis la carte : elle doit entraîner le défilement. */
+  const activateFromMap = (index: number | null) => {
+    setActiveIndex(index);
+    setScrollToActive(index !== null);
+  };
 
   const mutation = useMutation<LocatorResult, Error, LocatorPayload>({
     mutationFn: (payload) => api.findAccessPoints(payload),
@@ -50,7 +72,7 @@ export default function Locator() {
         subtitle="Recherchez les UPS Access Points autour d'une adresse de livraison."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:items-start">
         <form onSubmit={submit} className="lg:sticky lg:top-4">
           <Card>
             <CardTitle title="Zone de recherche" />
@@ -132,25 +154,33 @@ export default function Locator() {
                 Aucun point relais trouvé dans ce rayon. Essayez d'élargir la recherche.
               </Alert>
             ) : (
-              <div className="space-y-3">
+              /* Carte et liste côte à côte, à hauteur égale : la liste défile
+                 sans entraîner la carte. */
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
                 <AccessPointsMap
                   locations={mutation.data.locations}
                   activeIndex={activeIndex}
-                  onActivate={setActiveIndex}
+                  onActivate={activateFromMap}
                 />
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[--k-muted]">
-                  {mutation.data.locations.length} point(s) relais — du plus proche au plus éloigné
-                </p>
-                <div className="space-y-2">
-                  {mutation.data.locations.map((loc, i) => (
-                    <LocationRow
-                      key={loc.locationId || i}
-                      loc={loc}
-                      index={i}
-                      active={activeIndex === i}
-                      onActivate={() => setActiveIndex(i)}
-                    />
-                  ))}
+
+                <div className="flex min-h-0 flex-col xl:h-[520px]">
+                  <p className="mb-2 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-[--k-muted]">
+                    {mutation.data.locations.length} point(s) — du plus proche au plus éloigné
+                  </p>
+                  <div
+                    ref={listRef}
+                    className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 xl:pr-2"
+                  >
+                    {mutation.data.locations.map((loc, i) => (
+                      <LocationRow
+                        key={loc.locationId || i}
+                        loc={loc}
+                        index={i}
+                        active={activeIndex === i}
+                        onActivate={() => setActiveIndex(i)}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             )
@@ -193,6 +223,7 @@ function LocationRow({ loc, index, active, onActivate }: LocationRowProps) {
 
   return (
     <div
+      data-row={index}
       onMouseEnter={onActivate}
       onClick={onActivate}
       className={`cursor-pointer rounded-xl border bg-[--k-surface] p-3 transition ${
