@@ -45,6 +45,13 @@ export interface TrackedPackage {
 
 export interface TrackingResult {
   packages: TrackedPackage[];
+  /** Numéro interrogé, renvoyé tel quel par le backend. */
+  queriedNumber?: string;
+  /**
+   * Faux quand UPS a répondu pour un autre numéro (colis de démonstration
+   * renvoyé pour un numéro inexistant). Calculé côté backend.
+   */
+  matched?: boolean;
 }
 
 export interface ServiceOption {

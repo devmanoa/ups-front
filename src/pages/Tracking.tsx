@@ -44,18 +44,14 @@ export default function Tracking() {
   };
 
   /**
-   * Numéro réellement renvoyé par UPS s'il diffère de celui demandé.
-   * La comparaison ignore casse et espaces : seule une vraie divergence
-   * de numéro doit déclencher l'avertissement.
+   * Le backend compare le numéro interrogé à TOUS les colis renvoyés
+   * (alias inclus) et porte son verdict dans `matched` : ni duplication de
+   * la règle ici, ni fausse alerte sur les envois multi-colis.
+   * `=== false` : un backend antérieur sans ce champ ne déclenche rien.
    */
-  const normalize = (v: string) => v.replace(/\s+/g, '').toUpperCase();
-  const returnedNumber = mutation.data?.packages[0]?.trackingNumber;
-  const mismatchedNumber =
-    mutation.isSuccess && returnedNumber && mutation.variables
-      ? normalize(returnedNumber) !== normalize(mutation.variables)
-        ? returnedNumber
-        : null
-      : null;
+  const mismatch =
+    mutation.isSuccess && (mutation.data.packages?.length ?? 0) > 0 && mutation.data.matched === false;
+  const returnedNumber = mutation.data?.packages?.[0]?.trackingNumber;
 
   return (
     <div>
@@ -92,10 +88,16 @@ export default function Tracking() {
       {/* UPS renvoie un colis de démonstration quand le numéro n'existe pas.
           Sans avertissement, l'utilisateur prendrait ces données pour les
           siennes après une simple faute de frappe. */}
-      {mismatchedNumber && (
+      {mismatch && (
         <Alert type="info" className="mb-4">
-          UPS a répondu pour le numéro <strong>{mismatchedNumber}</strong>, différent de celui
-          saisi (<strong>{mutation.variables}</strong>).
+          {returnedNumber ? (
+            <>
+              UPS a répondu pour le numéro <strong>{returnedNumber}</strong>, différent de celui
+              saisi (<strong>{mutation.variables}</strong>).
+            </>
+          ) : (
+            <>Aucun des colis renvoyés ne correspond au numéro saisi ({mutation.variables}).</>
+          )}
           <span className="mt-1 block text-[12px] opacity-80">
             Vérifiez votre saisie : les informations ci-dessous concernent un autre colis.
           </span>

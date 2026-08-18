@@ -191,10 +191,28 @@ export default function Shipments() {
       </Card>
 
       {refresh.isSuccess && (
-        <Alert type="info" className="mb-4">
+        <Alert
+          type={refresh.data.results.some((r) => !r.ok) ? 'error' : 'info'}
+          className="mb-4"
+        >
           {refresh.data.results.filter((r) => r.ok).length} statut(s) mis à jour
           {refresh.data.results.some((r) => !r.ok) &&
             ` — ${refresh.data.results.filter((r) => !r.ok).length} en échec`}
+          {/* Sans le détail, impossible de distinguer un numéro erroné
+              d'une panne UPS transitoire, ni de savoir quels envois ne
+              se mettent plus à jour. */}
+          {refresh.data.results.some((r) => !r.ok) && (
+            <ul className="mt-1.5 space-y-0.5 text-[12px] opacity-90">
+              {refresh.data.results
+                .filter((r) => !r.ok)
+                .map((r) => (
+                  <li key={r.trackingNumber}>
+                    <code className="rounded bg-black/5 px-1">{r.trackingNumber}</code>{' '}
+                    — {r.error || 'erreur inconnue'}
+                  </li>
+                ))}
+            </ul>
+          )}
         </Alert>
       )}
 
