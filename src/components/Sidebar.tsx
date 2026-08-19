@@ -46,27 +46,32 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   {
     label: 'Expédition',
     items: [
-      { label: 'Suivi de colis', icon: PackageSearch, to: '/tracking' },
-      { label: 'Tarifs', icon: Calculator, to: '/rating' },
-      { label: 'Délais', icon: Clock, to: '/transit-times' },
       { label: 'Étiquettes', icon: Tag, to: '/shipping' },
       { label: 'Envoi groupé', icon: Layers, to: '/shipping/bulk' },
-      { label: 'Envois en cours', icon: Package, to: '/shipments' },
-      { label: 'Anomalies', icon: AlertTriangle, to: '/anomalies' },
       { label: 'Enlèvement', icon: Truck, to: '/pickup' },
     ],
   },
   {
-    label: 'Adresses',
+    label: 'Suivi',
     items: [
-      { label: 'Points relais', icon: MapPin, to: '/locator' },
-      { label: 'Validation', icon: MapPinned, to: '/address' },
+      { label: 'Suivi de colis', icon: PackageSearch, to: '/tracking' },
+      { label: 'Envois en cours', icon: Package, to: '/shipments' },
+      { label: 'Anomalies', icon: AlertTriangle, to: '/anomalies' },
     ],
   },
   {
-    label: 'International',
+    label: 'Tarifs et délais',
     items: [
+      { label: 'Tarifs', icon: Calculator, to: '/rating' },
+      { label: 'Délais', icon: Clock, to: '/transit-times' },
       { label: "Coûts à l'import", icon: Globe, to: '/landed-cost' },
+    ],
+  },
+  {
+    label: 'Outils',
+    items: [
+      { label: 'Points relais', icon: MapPin, to: '/locator' },
+      { label: 'Validation', icon: MapPinned, to: '/address' },
       { label: 'Documents douaniers', icon: FileText, to: '/paperless' },
     ],
   },
