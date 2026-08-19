@@ -1,24 +1,9 @@
 import React, { Component, Suspense, useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  PackageSearch,
-  Calculator,
-  MapPin,
-  MapPinned,
-  Tag,
-  Truck,
-  Clock,
-  Globe,
-  FileText,
-  Layers,
-  Package,
-  AlertTriangle,
-} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { loadRemoteComponent } from '../../remoteLoader';
 import { Topbar } from '../Topbar';
-import { Sidebar } from '../Sidebar';
+import { Sidebar, SIDEBAR_SECTIONS as LOCAL_SECTIONS } from '../Sidebar';
 import ErrorBoundary from '../ErrorBoundary';
 
 /**
@@ -34,41 +19,13 @@ const RemoteHeaderBar = React.lazy(() => loadRemoteComponent('./HeaderBar'));
 const RemoteSidebar = React.lazy(() => loadRemoteComponent('./Sidebar'));
 
 // Deux contrats coexistent — `path` pour le composant remote Konitys,
-// `to` pour la Sidebar locale (react-router). On porte les deux pour éviter
-// un mapping conditionnel.
-const SIDEBAR_SECTIONS = [
-  {
-    label: 'Accueil',
-    items: [{ icon: LayoutDashboard, label: 'Tableau de bord', path: '/', to: '/' }],
-  },
-  {
-    label: 'Expédition',
-    items: [
-      { icon: PackageSearch, label: 'Suivi de colis', path: '/tracking', to: '/tracking' },
-      { icon: Calculator, label: 'Tarifs', path: '/rating', to: '/rating' },
-      { icon: Clock, label: 'Délais', path: '/transit-times', to: '/transit-times' },
-      { icon: Tag, label: 'Étiquettes', path: '/shipping', to: '/shipping' },
-      { icon: Layers, label: 'Envoi groupé', path: '/shipping/bulk', to: '/shipping/bulk' },
-      { icon: Package, label: 'Envois en cours', path: '/shipments', to: '/shipments' },
-      { icon: AlertTriangle, label: 'Anomalies', path: '/anomalies', to: '/anomalies' },
-      { icon: Truck, label: 'Enlèvement', path: '/pickup', to: '/pickup' },
-    ],
-  },
-  {
-    label: 'Adresses',
-    items: [
-      { icon: MapPin, label: 'Points relais', path: '/locator', to: '/locator' },
-      { icon: MapPinned, label: 'Validation', path: '/address', to: '/address' },
-    ],
-  },
-  {
-    label: 'International',
-    items: [
-      { icon: Globe, label: "Coûts à l'import", path: '/landed-cost', to: '/landed-cost' },
-      { icon: FileText, label: 'Documents douaniers', path: '/paperless', to: '/paperless' },
-    ],
-  },
-];
+// `to` pour la Sidebar locale (react-router). Le menu est défini une seule
+// fois dans Sidebar.tsx ; on y ajoute `path` ici plutôt que d'entretenir
+// une seconde liste qui finirait par diverger.
+const SIDEBAR_SECTIONS = LOCAL_SECTIONS.map((section) => ({
+  ...section,
+  items: section.items.map((item) => ({ ...item, path: item.to })),
+}));
 
 // Placeholders dimensionnés comme les composants finaux pour éviter un saut visuel.
 function HeaderFallback() {
