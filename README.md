@@ -32,9 +32,7 @@ L'interface démarre sur `http://localhost:5173`.
 ### Autocomplétion d'adresse
 
 Les champs « Adresse » utilisent Google Places : choisir une suggestion remplit
-automatiquement la ville, l'état, le code postal et le pays. Sur la page Validation,
-les suggestions sont restreintes aux États-Unis et Porto Rico, seuls pays couverts
-par cette API UPS.
+automatiquement la ville, l'état, le code postal et le pays.
 
 La clé doit avoir l'API **Places** et l'API **Maps JavaScript** activées, ainsi que la
 facturation configurée. Elle est visible dans le navigateur — **restreignez-la par
@@ -62,7 +60,6 @@ les modifier ne demande pas de reconstruire l'image.
 | Étiquettes | `/shipping` | Création d'expédition, aperçu, téléchargement, annulation |
 | Enlèvement | `/pickup` | Planification et annulation du passage d'un chauffeur |
 | Points relais | `/locator` | Carte Google des UPS Access Points + liste synchronisée, horaires, ID copiable |
-| Validation d'adresse | `/address` | Normalisation et classification (US/PR uniquement) |
 | Coûts à l'import | `/landed-cost` | Droits de douane, taxes et frais pour l'international |
 | Documents douaniers | `/paperless` | Téléversement de factures commerciales dématérialisées |
 

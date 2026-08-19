@@ -1,7 +1,6 @@
 import keycloak from '../config/keycloak';
 import { isAuthConfigured, runtimeConfig } from '../config/runtime';
 import type {
-  AddressValidationResult,
   HealthResult,
   LocatorResult,
   PackageInput,
@@ -128,11 +127,6 @@ export interface LocatorPayload {
   maxResults?: number;
 }
 
-export interface AddressPayload {
-  address: Address;
-  requestOption?: number;
-}
-
 export interface TransitPayload {
   shipFrom?: Address;
   shipTo: Address;
@@ -192,9 +186,6 @@ export const api = {
     request<ShipmentResult>('/api/shipping', { method: 'POST', body: payload }),
   voidShipment: (shipmentId: string) =>
     request<VoidResult>(`/api/shipping/${encodeURIComponent(shipmentId)}`, { method: 'DELETE' }),
-
-  validateAddress: (payload: AddressPayload) =>
-    request<AddressValidationResult>('/api/address/validate', { method: 'POST', body: payload }),
 
   findAccessPoints: (payload: LocatorPayload) =>
     request<LocatorResult>('/api/locator/access-points', { method: 'POST', body: payload }),

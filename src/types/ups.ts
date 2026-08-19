@@ -108,22 +108,6 @@ export interface LocatorResult {
   locations: AccessPointLocation[];
 }
 
-export interface AddressCandidate {
-  addressLines: string[];
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-}
-
-export interface AddressValidationResult {
-  valid: boolean;
-  ambiguous: boolean;
-  noCandidates: boolean;
-  classification: { code: string; description: string } | null;
-  candidates: AddressCandidate[];
-}
-
 export interface ShipmentLabel {
   base64: string;
   mime: string;

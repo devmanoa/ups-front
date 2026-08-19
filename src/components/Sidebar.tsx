@@ -5,7 +5,6 @@ import {
   PackageSearch,
   Calculator,
   MapPin,
-  MapPinned,
   Tag,
   Truck,
   Clock,
@@ -71,7 +70,6 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
     label: 'Outils',
     items: [
       { label: 'Points relais', icon: MapPin, to: '/locator' },
-      { label: 'Validation', icon: MapPinned, to: '/address' },
       { label: 'Documents douaniers', icon: FileText, to: '/paperless' },
     ],
   },
