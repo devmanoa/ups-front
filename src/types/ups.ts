@@ -294,12 +294,24 @@ export interface RefreshStatusResult {
 }
 
 export interface SyncResult {
+  /**
+   * 'quantumview' : un seul appel UPS pour tous les colis récents.
+   * 'tracking' : QuantumView indisponible (QVD inactif ou API non
+   * souscrite), le backend a basculé sur le suivi colis par colis.
+   * Absent avec un backend antérieur (comportement QuantumView).
+   */
+  mode?: 'quantumview' | 'tracking';
   eventsRead: number;
   pagesRead: number;
   hasMore: boolean;
   updated: number;
   ignored: number;
   details: Array<{ trackingNumber: string; status: ShipmentStatus; description: string }>;
+  /** Mode 'tracking' uniquement. */
+  fallbackReason?: string;
+  checked?: number;
+  failed?: number;
+  failures?: Array<{ trackingNumber: string; error: string }>;
 }
 
 export interface StoredLabel {

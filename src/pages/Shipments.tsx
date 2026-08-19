@@ -125,7 +125,7 @@ export default function Shipments() {
               size="sm"
               isLoading={sync.isPending}
               onClick={() => sync.mutate()}
-              title="Un seul appel UPS pour tous les colis récents (QuantumView)"
+              title="Actualise tous les envois ouverts (QuantumView, ou suivi colis par colis si indisponible)"
             >
               {!sync.isPending && <RadioTower className="h-4 w-4" />}
               Synchroniser
@@ -225,7 +225,28 @@ export default function Shipments() {
         </Alert>
       )}
 
-      {sync.isSuccess && (
+      {sync.isSuccess && sync.data.mode === 'tracking' && (
+        <Alert type={sync.data.updated > 0 ? 'success' : 'info'} className="mb-4">
+          {sync.data.checked} envoi(s) vérifié(s) — {sync.data.updated} mis à jour
+          {(sync.data.failed ?? 0) > 0 && `, ${sync.data.failed} en échec`}
+          {sync.data.hasMore && ' (relancez pour traiter la suite)'}
+          <span className="mt-1 block text-[12px] opacity-80">
+            QuantumView indisponible sur votre compte : synchronisation effectuée via le suivi
+            colis par colis.
+          </span>
+          {(sync.data.failures?.length ?? 0) > 0 && (
+            <ul className="mt-1.5 space-y-0.5 text-[12px] opacity-90">
+              {sync.data.failures!.map((f) => (
+                <li key={f.trackingNumber}>
+                  <code className="rounded bg-black/5 px-1">{f.trackingNumber}</code> — {f.error}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Alert>
+      )}
+
+      {sync.isSuccess && sync.data.mode !== 'tracking' && (
         <Alert type={sync.data.updated > 0 ? 'success' : 'info'} className="mb-4">
           {sync.data.eventsRead} événement(s) reçu(s) — {sync.data.updated} envoi(s) mis à jour
           {sync.data.ignored > 0 && `, ${sync.data.ignored} hors historique`}
