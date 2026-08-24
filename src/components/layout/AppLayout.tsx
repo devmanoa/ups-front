@@ -107,6 +107,42 @@ export default function AppLayout() {
 
   const handleNavigate = (path: string) => navigate(path);
 
+  /**
+   * Rétablit Ctrl+clic et clic molette sur le menu fédéré du hub.
+   *
+   * Le contrat du remote est un callback `onNavigate`, donc ses entrées sont
+   * des `<button>` sans `href` : le navigateur n'a rien à ouvrir dans un
+   * nouvel onglet, et le clic droit ne propose pas l'option. On intercepte
+   * donc le clic en phase de capture, avant que le hub ne le traite, et on
+   * ouvre l'onglet nous-mêmes.
+   *
+   * Correctif de contournement : la vraie solution est que le hub rende des
+   * `<a href>`. Tant qu'il ne le fait pas, cela rend le menu utilisable.
+   */
+  const interceptModifiedClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const modified = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
+    if (!modified) return;
+
+    // Remonte au conteneur cliquable pour retrouver le libellé de l'entrée.
+    const target = (e.target as HTMLElement).closest('button, [role="button"], a');
+    if (!target) return;
+
+    // Une vraie ancre gère déjà le cas : ne pas s'en mêler.
+    if (target.tagName === 'A' && target.getAttribute('href')) return;
+
+    const label = target.textContent?.trim();
+    if (!label) return;
+
+    const item = SIDEBAR_SECTIONS.flatMap((s) => s.items).find(
+      (i) => i.label.toLowerCase() === label.toLowerCase(),
+    );
+    if (!item) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(item.to, '_blank', 'noopener');
+  };
+
   const localTopbar = <Topbar onToggleMobileMenu={() => setMobileMenuOpen((v) => !v)} />;
   const localSidebar = (
     <Sidebar
@@ -133,7 +169,13 @@ export default function AppLayout() {
       </RemoteErrorBoundary>
 
       <div className="flex flex-1 min-h-0">
-        <div className="hidden md:block">
+        {/* onClickCapture et onAuxClickCapture : le clic est intercepté avant
+            d'atteindre le menu du hub, qui l'avalerait sans ouvrir d'onglet. */}
+        <div
+          className="hidden md:block"
+          onClickCapture={interceptModifiedClick}
+          onAuxClickCapture={interceptModifiedClick}
+        >
           <RemoteErrorBoundary fallback={localSidebar}>
             <Suspense fallback={<SidebarFallback />}>
               <RemoteSidebar
