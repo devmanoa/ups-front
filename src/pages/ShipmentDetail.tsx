@@ -249,7 +249,7 @@ export default function ShipmentDetail() {
             {/* Informations à gauche, carte à droite : la grille précédente
                 alternait les champs sur deux colonnes, ce qui étirait le bloc
                 sur toute la largeur pour quelques lignes de texte. */}
-            <div className="mt-4 grid gap-x-6 gap-y-4 border-t border-[--k-border] pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+            <div className="mt-4 grid gap-x-6 gap-y-4 border-t border-[--k-border] pt-4 lg:grid-cols-2">
               <div className="min-w-0 space-y-3">
                 <div className="min-w-0">
                   <dt className="text-[12px] font-medium text-[--k-muted]">Destinataire</dt>
@@ -325,13 +325,16 @@ export default function ShipmentDetail() {
                 )}
               </div>
 
+              {/* Les points relais vivent ici plutôt que dans un bloc séparé :
+                  une seule carte, à laquelle on demande les deux choses. */}
               <AddressMap
                 addressLine1={shipment.recipient.address}
                 city={shipment.recipient.city}
                 postalCode={shipment.recipient.postalCode}
                 country={shipment.recipient.country}
                 label={shipment.recipient.name ?? shipment.recipient.company}
-                height="220px"
+                height="240px"
+                showAccessPoints
               />
             </div>
           </Card>
@@ -395,24 +398,6 @@ export default function ShipmentDetail() {
               )}
             </Card>
           )}
-
-          <Card>
-            {/* Distinct de la carte du bloc d'en-tête, qui ne fait que situer
-                l'adresse : celle-ci sert à trouver un relais de repli. */}
-            <CardTitle
-              title="Points relais à proximité"
-              hint="Si le destinataire est absent, un relais peut prendre le colis"
-            />
-            <AddressMap
-              addressLine1={shipment.recipient.address}
-              city={shipment.recipient.city}
-              postalCode={shipment.recipient.postalCode}
-              country={shipment.recipient.country}
-              label={shipment.recipient.name ?? shipment.recipient.company}
-              height="320px"
-              showAccessPoints
-            />
-          </Card>
 
           <Card>
             <CardTitle
