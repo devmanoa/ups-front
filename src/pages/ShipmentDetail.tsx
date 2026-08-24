@@ -158,14 +158,6 @@ export default function ShipmentDetail() {
   // autoriser une suppression.
   const myId = keycloak.tokenParsed?.sub ?? null;
 
-  const recipient = [
-    shipment.recipient.name,
-    shipment.recipient.company,
-    shipment.recipient.address,
-    [shipment.recipient.postalCode, shipment.recipient.city].filter(Boolean).join(' '),
-    shipment.recipient.country,
-  ].filter(Boolean);
-
   return (
     <div>
       <PageHeader
@@ -254,50 +246,94 @@ export default function ShipmentDetail() {
               )}
             </div>
 
-            <dl className="mt-4 grid gap-x-6 gap-y-3 border-t border-[--k-border] pt-4 sm:grid-cols-2">
-              <Detail label="Destinataire" value={recipient.join(', ') || '—'} />
-              <Detail label="Créé le" value={formatDate(shipment.createdAt)} />
-              <div className="min-w-0">
-                <dt className="text-[12px] font-medium text-[--k-muted]">Créé par</dt>
-                <dd className="mt-1 flex items-center gap-2">
-                  <Avatar name={creator?.name} seed={creator?.id} size="sm" />
-                  <span className="truncate text-[13px] text-[--k-text]">
-                    {creator?.name ?? 'Utilisateur inconnu'}
-                  </span>
-                </dd>
+            {/* Informations à gauche, carte à droite : la grille précédente
+                alternait les champs sur deux colonnes, ce qui étirait le bloc
+                sur toute la largeur pour quelques lignes de texte. */}
+            <div className="mt-4 grid gap-x-6 gap-y-4 border-t border-[--k-border] pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+              <div className="min-w-0 space-y-3">
+                <div className="min-w-0">
+                  <dt className="text-[12px] font-medium text-[--k-muted]">Destinataire</dt>
+                  <dd className="mt-0.5 text-[13px] leading-relaxed text-[--k-text]">
+                    {shipment.recipient.name && (
+                      <span className="font-medium">{shipment.recipient.name}</span>
+                    )}
+                    {shipment.recipient.company && (
+                      <span className="text-[--k-muted]"> — {shipment.recipient.company}</span>
+                    )}
+                    {/* L'adresse sur sa propre ligne : sur une seule, la ville
+                        se noyait entre le nom et le pays. */}
+                    {shipment.recipient.address && (
+                      <span className="block">{shipment.recipient.address}</span>
+                    )}
+                    <span className="block">
+                      {[shipment.recipient.postalCode, shipment.recipient.city]
+                        .filter(Boolean)
+                        .join(' ')}
+                      {shipment.recipient.country && (
+                        <span className="text-[--k-muted]"> ({shipment.recipient.country})</span>
+                      )}
+                    </span>
+                  </dd>
+                </div>
+
+                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                  <Detail label="Créé le" value={formatDate(shipment.createdAt)} />
+                  <div className="min-w-0">
+                    <dt className="text-[12px] font-medium text-[--k-muted]">Créé par</dt>
+                    <dd className="mt-1 flex items-center gap-2">
+                      <Avatar name={creator?.name} seed={creator?.id} size="sm" />
+                      <span className="truncate text-[13px] text-[--k-text]">
+                        {creator?.name ?? 'Utilisateur inconnu'}
+                      </span>
+                    </dd>
+                  </div>
+                  <Detail label="Poids facturé" value={shipment.billingWeight ?? '—'} />
+                  {shipment.reference && <Detail label="Référence" value={shipment.reference} />}
+                  {shipment.description && (
+                    <Detail label="Description" value={shipment.description} />
+                  )}
+                  {shipment.expectedDelivery && (
+                    <Detail
+                      label="Livraison prévue"
+                      value={formatDate(shipment.expectedDelivery)}
+                    />
+                  )}
+                  {shipment.deliveredAt && (
+                    <Detail label="Livré le" value={formatDate(shipment.deliveredAt)} />
+                  )}
+                  {shipment.voidedAt && (
+                    <Detail label="Annulé le" value={formatDate(shipment.voidedAt)} />
+                  )}
+                </dl>
+
                 {!creator && (
-                  <p className="mt-0.5 text-[11px] text-[--k-muted]">
+                  <p className="text-[11px] text-[--k-muted]">
                     L’auteur n’est enregistré que depuis l’activation de Keycloak.
                   </p>
                 )}
-              </div>
-              <Detail label="Poids facturé" value={shipment.billingWeight ?? '—'} />
-              {shipment.reference && <Detail label="Référence" value={shipment.reference} />}
-              {shipment.description && <Detail label="Description" value={shipment.description} />}
-              {shipment.expectedDelivery && (
-                <Detail label="Livraison prévue" value={formatDate(shipment.expectedDelivery)} />
-              )}
-              {shipment.deliveredAt && (
-                <Detail label="Livré le" value={formatDate(shipment.deliveredAt)} />
-              )}
-              {shipment.voidedAt && (
-                <Detail label="Annulé le" value={formatDate(shipment.voidedAt)} />
-              )}
-            </dl>
 
-            {shipment.trackingNumber && (
-              <div className="mt-4 border-t border-[--k-border] pt-3">
-                <a
-                  href={`https://www.ups.com/track?loc=fr_FR&tracknum=${encodeURIComponent(shipment.trackingNumber)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[13px] text-[--k-primary] hover:underline"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Suivre sur ups.com
-                </a>
+                {shipment.trackingNumber && (
+                  <a
+                    href={`https://www.ups.com/track?loc=fr_FR&tracknum=${encodeURIComponent(shipment.trackingNumber)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[13px] text-[--k-primary] hover:underline"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Suivre sur ups.com
+                  </a>
+                )}
               </div>
-            )}
+
+              <AddressMap
+                addressLine1={shipment.recipient.address}
+                city={shipment.recipient.city}
+                postalCode={shipment.recipient.postalCode}
+                country={shipment.recipient.country}
+                label={shipment.recipient.name ?? shipment.recipient.company}
+                height="220px"
+              />
+            </div>
           </Card>
 
           {packages.length > 0 && (
@@ -361,11 +397,11 @@ export default function ShipmentDetail() {
           )}
 
           <Card>
+            {/* Distinct de la carte du bloc d'en-tête, qui ne fait que situer
+                l'adresse : celle-ci sert à trouver un relais de repli. */}
             <CardTitle
-              title="Destination"
-              hint={`${[shipment.recipient.postalCode, shipment.recipient.city]
-                .filter(Boolean)
-                .join(' ')} — et les points relais UPS à proximité`}
+              title="Points relais à proximité"
+              hint="Si le destinataire est absent, un relais peut prendre le colis"
             />
             <AddressMap
               addressLine1={shipment.recipient.address}

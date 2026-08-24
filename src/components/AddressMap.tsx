@@ -278,7 +278,9 @@ export function AddressMap({
         <div ref={containerRef} className="h-full w-full" />
       </div>
 
-      {status === 'ready' && (
+      {/* Légende inutile quand la carte ne porte qu'un marqueur : il n'y a
+          rien à distinguer. */}
+      {status === 'ready' && showAccessPoints && (
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[--k-muted]">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
