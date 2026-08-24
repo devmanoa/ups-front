@@ -452,3 +452,23 @@ export interface PackagingCode {
   code: string;
   name: string;
 }
+
+/** Indicateurs chiffrés sur les envois, pour le tableau de bord. */
+export interface ShipmentStats {
+  shipmentCount: number;
+  packageCount: number;
+  totalCost: number;
+  averageCost: number | null;
+  currency: string;
+  averageDeliveryDays: number | null;
+  deliveredCount: number;
+  byStatus: Record<string, number>;
+  byService: Array<{ service: string; shipmentCount: number; totalCost: number }>;
+  byDay: Array<{ day: string; shipmentCount: number; totalCost: number }>;
+}
+
+export interface StatsResult {
+  counts: Record<string, number>;
+  stats?: ShipmentStats;
+  dbEnabled: boolean;
+}

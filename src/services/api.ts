@@ -35,6 +35,7 @@ import type {
   PackageType,
   PackageTypesResult,
   PackagingCode,
+  StatsResult,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -291,6 +292,8 @@ export const api = {
     const suffix = qs.toString() ? `?${qs}` : '';
     return request<ShipmentsListResult>(`/api/shipments${suffix}`);
   },
+  getShipmentStats: (params: { from?: string; to?: string } = {}) =>
+    request<StatsResult>(`/api/shipments/stats${toQueryString(params)}`),
   getShipmentLabel: (trackingNumber: string) =>
     request<StoredLabel>(`/api/shipments/${encodeURIComponent(trackingNumber)}/label`),
   refreshShipmentStatus: (trackingNumbers: string[]) =>

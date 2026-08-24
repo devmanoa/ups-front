@@ -77,6 +77,28 @@ d'ajouter plusieurs colis identiques d'un coup : trois bornes, une seule action.
 Le poids seul est obligatoire ; les dimensions sont facultatives, UPS ne les
 prenant en compte que si les trois sont renseignées.
 
+### Indicateurs chiffrés
+
+Le **tableau de bord** affiche les chiffres clés des 30 derniers jours :
+dépensé, nombre d'expéditions, coût moyen, envois en cours.
+
+La page **Envois en cours** porte un panneau « Indicateurs », replié par défaut
+— la page sert d'abord à retrouver un colis. Ouvert, il donne sur 7, 30, 90 jours
+ou depuis le début :
+
+- coût total et moyen, nombre d'expéditions et de colis
+- délai moyen de livraison réel, calculé sur les envois livrés
+- répartition du coût par service UPS, en barres
+- coût quotidien, en histogramme
+
+> **Un envoi multi-colis compte pour une expédition.** Le coût n'est pas
+> multiplié par le nombre de colis, contrairement à ce qu'une somme naïve des
+> lignes en base donnerait. Les expéditions annulées sont exclues des coûts.
+
+Sans base de données, ces blocs disparaissent au lieu d'afficher des zéros
+trompeurs. Aucune librairie de graphiques n'est utilisée : les barres sont en
+CSS, ce qui évite une dépendance pour deux visualisations.
+
 ### Enlèvements rattachés aux étiquettes
 
 La page **Enlèvement** comporte une section « Colis concernés », qui manquait :

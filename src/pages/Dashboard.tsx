@@ -15,12 +15,15 @@ import {
   AlertCircle,
   AlertTriangle,
   Loader2,
+  Euro,
+  TrendingUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
+import { money } from '../utils/format';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Shortcut {
@@ -197,6 +200,8 @@ export default function Dashboard() {
         )}
       </Card>
 
+      <DashboardKpis />
+
       <div className="space-y-5">
         {SHORTCUTS.map((group) => (
           <Section key={group.section} label={group.section}>
@@ -209,6 +214,66 @@ export default function Dashboard() {
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * Chiffres clés des 30 derniers jours.
+ *
+ * Sans base de données, la route renvoie `dbEnabled: false` : le bloc
+ * disparaît plutôt que d'afficher des zéros trompeurs.
+ */
+function DashboardKpis() {
+  const stats = useQuery({
+    queryKey: ['shipment-stats', 30],
+    queryFn: () => {
+      const from = new Date();
+      from.setDate(from.getDate() - 30);
+      return api.getShipmentStats({ from: from.toISOString().slice(0, 10) });
+    },
+    retry: false,
+  });
+
+  const data = stats.data?.stats;
+  if (stats.isError || !data || data.shipmentCount === 0) return null;
+
+  const currency = data.currency || 'EUR';
+  const open =
+    (data.byStatus.created ?? 0) + (data.byStatus.in_transit ?? 0);
+
+  const items = [
+    { label: 'Dépensé', value: money(data.totalCost, currency), icon: Euro },
+    { label: 'Expéditions', value: String(data.shipmentCount), icon: Package },
+    {
+      label: 'Coût moyen',
+      value: data.averageCost != null ? money(data.averageCost, currency) : '—',
+      icon: TrendingUp,
+    },
+    { label: 'En cours', value: String(open), icon: Truck },
+  ];
+
+  return (
+    <Section label="30 derniers jours">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map(({ label, value, icon: Icon }) => (
+          <Card key={label}>
+            <div className="flex items-center gap-2">
+              <Icon className="h-4 w-4 text-[--k-primary]" />
+              <span className="text-[12px] font-medium text-[--k-muted]">{label}</span>
+            </div>
+            <p className="mt-1.5 text-[20px] font-bold leading-tight text-[--k-text]">{value}</p>
+          </Card>
+        ))}
+      </div>
+      <div className="mt-2">
+        <Link
+          to="/shipments"
+          className="text-[12px] font-medium text-[--k-primary] hover:underline"
+        >
+          Voir le détail des envois →
+        </Link>
+      </div>
+    </Section>
   );
 }
 

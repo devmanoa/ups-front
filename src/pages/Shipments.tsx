@@ -27,6 +27,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 import { money, downloadBase64, printBase64, formatDate } from '../utils/format';
+import { ShipmentStatsPanel } from '../components/ShipmentStatsPanel';
 
 const PAGE_SIZE = 25;
 
@@ -151,6 +152,8 @@ export default function Shipments() {
           </div>
         }
       />
+
+      <ShipmentStatsPanel />
 
       <Card className="mb-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
