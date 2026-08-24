@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import keycloak from '../config/keycloak';
-import type { ShipmentStatus } from '../types/ups';
+import type { ShipmentStatus, StoredLabel } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardTitle } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
@@ -28,7 +28,15 @@ import { Avatar } from '../components/ui/Avatar';
 import { RichTextEditor, sanitizeHtml, isHtmlEmpty } from '../components/ui/RichTextEditor';
 import { AddressMap } from '../components/AddressMap';
 import { cn } from '../components/ui/cn';
-import { money, formatDate, downloadBase64, printBase64, shipmentKey, isPlaceholderTracking } from '../utils/format';
+import {
+  money,
+  formatDate,
+  downloadBase64,
+  printBase64,
+  printImages,
+  shipmentKey,
+  isPlaceholderTracking,
+} from '../utils/format';
 import { actionMeta } from '../utils/actionMeta';
 
 const STATUS_META: Record<
@@ -79,15 +87,31 @@ export default function ShipmentDetail() {
 
   const label = useMutation({
     mutationFn: async (action: 'print' | 'download') => {
-      const stored = await api.getShipmentLabel(trackingNumber);
-      const mime = stored.format === 'PDF' ? 'application/pdf' : 'image/gif';
+      // Toutes les étiquettes de l'expédition : sur un envoi multi-colis,
+      // n'en sortir qu'une laisserait les autres colis sans la leur.
+      const { labels } = await api.getShipmentLabels(trackingNumber);
+      const mimeOf = (l: StoredLabel) =>
+        l.format === 'PDF' ? 'application/pdf' : 'image/gif';
 
-      // Un format thermique (ZPL, EPL) ne s'imprime pas depuis le navigateur :
-      // on retombe sur le téléchargement plutôt que de ne rien faire.
-      if (action === 'print' && printBase64(stored.base64, mime)) return;
+      if (action === 'print') {
+        const images = labels
+          .filter((l) => mimeOf(l) === 'image/gif')
+          .map((l) => ({ base64: l.base64, mime: 'image/gif' }));
 
-      const ext = (stored.format || 'gif').toLowerCase();
-      downloadBase64(stored.base64, mime, `etiquette-${stored.trackingNumber}.${ext}`);
+        // Une seule boîte de dialogue pour tous les colis, une étiquette par
+        // page : enchaîner les impressions en ouvrirait autant qu'il y a de
+        // colis.
+        if (images.length > 0 && printImages(images) > 0) return;
+
+        // Format thermique (ZPL, EPL) ou PDF : on retombe sur le
+        // téléchargement plutôt que de ne rien faire.
+        if (labels.length === 1 && printBase64(labels[0].base64, mimeOf(labels[0]))) return;
+      }
+
+      for (const l of labels) {
+        const ext = (l.format || 'gif').toLowerCase();
+        downloadBase64(l.base64, mimeOf(l), `etiquette-${l.trackingNumber}.${ext}`);
+      }
     },
   });
 
@@ -128,6 +152,8 @@ export default function ShipmentDetail() {
   const { shipment, creator, activity, comments, packages } = detail.data!;
   const meta = STATUS_META[shipment.status] ?? STATUS_META.created;
   const StatusIcon = meta.icon;
+  // Nombre de colis porteurs d'étiquette : c'est ce que les boutons sortiront.
+  const packageCount = packages.filter((p) => p.hasLabel).length || packages.length;
   // `sub` est l'identifiant Keycloak, celui que le backend compare pour
   // autoriser une suppression.
   const myId = keycloak.tokenParsed?.sub ?? null;
@@ -153,23 +179,36 @@ export default function ShipmentDetail() {
             </Button>
             {shipment.hasLabel && (
               <>
+                {/* Le compte est affiché dès qu'il y a plus d'un colis : sans
+                    lui, rien ne dirait que le bouton sort toutes les
+                    étiquettes et non celle du colis affiché. */}
                 <Button
                   type="button"
                   variant="secondary"
                   isLoading={label.isPending && label.variables === 'print'}
                   onClick={() => label.mutate('print')}
+                  title={
+                    packageCount > 1
+                      ? `Imprimer les ${packageCount} étiquettes de l’expédition`
+                      : 'Imprimer l’étiquette'
+                  }
                 >
                   <Printer className="h-4 w-4" />
-                  Imprimer
+                  {packageCount > 1 ? `Imprimer (${packageCount})` : 'Imprimer'}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
                   isLoading={label.isPending && label.variables === 'download'}
                   onClick={() => label.mutate('download')}
+                  title={
+                    packageCount > 1
+                      ? `Télécharger les ${packageCount} étiquettes`
+                      : 'Télécharger l’étiquette'
+                  }
                 >
                   <Download className="h-4 w-4" />
-                  Étiquette
+                  {packageCount > 1 ? `Étiquettes (${packageCount})` : 'Étiquette'}
                 </Button>
               </>
             )}

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api, type ShipmentsQuery } from '../services/api';
-import type { ShipmentStatus, StoredShipment } from '../types/ups';
+import type { ShipmentStatus, StoredShipment, StoredLabel } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
@@ -29,7 +29,14 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 import { ButtonLink } from '../components/ui/ButtonLink';
-import { money, downloadBase64, printBase64, formatDate, shipmentKey } from '../utils/format';
+import {
+  money,
+  downloadBase64,
+  printBase64,
+  printImages,
+  formatDate,
+  shipmentKey,
+} from '../utils/format';
 import { ShipmentStatsPanel } from '../components/ShipmentStatsPanel';
 
 const PAGE_SIZE = 25;
@@ -360,15 +367,29 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
     if (!shipment.trackingNumber) return;
     setDownloading(true);
     try {
-      const label = await api.getShipmentLabel(shipment.trackingNumber);
-      const mime = label.format === 'PDF' ? 'application/pdf' : 'image/gif';
+      // Toutes les étiquettes de l'expédition : la liste ne montre qu'une
+      // ligne par envoi, et n'en sortir qu'une laisserait les autres colis
+      // sans la leur.
+      const { labels } = await api.getShipmentLabels(shipment.trackingNumber);
+      const mimeOf = (l: StoredLabel) => (l.format === 'PDF' ? 'application/pdf' : 'image/gif');
 
-      // Un format thermique ne s'imprime pas depuis le navigateur : on
-      // retombe sur le téléchargement plutôt que de ne rien faire.
-      if (action === 'print' && printBase64(label.base64, mime)) return;
+      if (action === 'print') {
+        const images = labels
+          .filter((l) => mimeOf(l) === 'image/gif')
+          .map((l) => ({ base64: l.base64, mime: 'image/gif' }));
 
-      const ext = (label.format || 'gif').toLowerCase();
-      downloadBase64(label.base64, mime, `etiquette-${label.trackingNumber}.${ext}`);
+        // Une seule boîte de dialogue pour tous les colis.
+        if (images.length > 0 && printImages(images) > 0) return;
+
+        // Format thermique ne s'imprimant pas depuis le navigateur : on
+        // retombe sur le téléchargement plutôt que de ne rien faire.
+        if (labels.length === 1 && printBase64(labels[0].base64, mimeOf(labels[0]))) return;
+      }
+
+      for (const l of labels) {
+        const ext = (l.format || 'gif').toLowerCase();
+        downloadBase64(l.base64, mimeOf(l), `etiquette-${l.trackingNumber}.${ext}`);
+      }
     } catch {
       /* l'absence d'étiquette est déjà signalée par le bouton désactivé */
     } finally {
@@ -483,11 +504,17 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
                   variant="secondary"
                   size="sm"
                   isLoading={downloading}
-                  title="Ouvrir la boîte de dialogue d'impression"
+                  title={
+                    (shipment.packageCount ?? 1) > 1
+                      ? `Imprimer les ${shipment.packageCount} étiquettes de l'expédition`
+                      : "Ouvrir la boîte de dialogue d'impression"
+                  }
                   onClick={() => fetchLabel('print')}
                 >
                   {!downloading && <Printer className="h-3.5 w-3.5" />}
-                  Imprimer
+                  {(shipment.packageCount ?? 1) > 1
+                    ? `Imprimer (${shipment.packageCount})`
+                    : 'Imprimer'}
                 </Button>
                 <Button
                   type="button"

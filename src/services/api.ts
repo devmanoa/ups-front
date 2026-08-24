@@ -299,6 +299,12 @@ export const api = {
   getShipmentLabel: (trackingNumber: string) =>
     request<StoredLabel>(`/api/shipments/${encodeURIComponent(trackingNumber)}/label`),
 
+  /** Toutes les étiquettes de l'expédition, un envoi multi-colis en ayant plusieurs. */
+  getShipmentLabels: (trackingNumber: string) =>
+    request<{ labels: StoredLabel[]; count: number }>(
+      `/api/shipments/${encodeURIComponent(trackingNumber)}/labels`,
+    ),
+
   /** Détail complet : envoi, auteur, journal et commentaires en un appel. */
   getShipmentDetail: (trackingNumber: string) =>
     request<ShipmentDetail>(`/api/shipments/${encodeURIComponent(trackingNumber)}`),
