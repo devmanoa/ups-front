@@ -35,9 +35,6 @@ const EMPTY: PackageTypePayload = {
   reference: '',
 };
 
-/** Exemples proposés à la création : le matériel courant, prêt à ajuster. */
-const SUGGESTIONS = ['DS620', 'QW410', 'Magnets', 'Borne Spherik', 'Imprimante'];
-
 export default function PackageTypes() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -87,9 +84,9 @@ export default function PackageTypes() {
 
   const items = types.data?.types ?? [];
 
-  function openCreate(label = '') {
+  function openCreate() {
     setEditing(null);
-    setDraft({ ...EMPTY, label });
+    setDraft({ ...EMPTY });
   }
 
   function openEdit(type: PackageType) {
@@ -196,20 +193,10 @@ export default function PackageTypes() {
               }
             >
               {!search && (
-                <div className="flex flex-wrap justify-center gap-2">
-                  {SUGGESTIONS.map((label) => (
-                    <Button
-                      key={label}
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => openCreate(label)}
-                    >
-                      <Plus className="h-4 w-4" />
-                      {label}
-                    </Button>
-                  ))}
-                </div>
+                <Button type="button" onClick={() => openCreate()}>
+                  <Plus className="h-4 w-4" />
+                  Ajouter le premier type
+                </Button>
               )}
             </EmptyState>
           ) : (
