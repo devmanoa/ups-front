@@ -359,3 +359,56 @@ export interface AddressesResult {
   addresses: SavedAddress[];
   count: number;
 }
+
+/** Entrée du journal d'activité applicative (qui a fait quoi). */
+export interface ActivityEntry {
+  id: number;
+  occurredAt: string;
+  actor: { id: string | null; name: string; email: string | null };
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  summary: string;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface ActivityResult {
+  entries: ActivityEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ActivityActor {
+  id: string;
+  name: string;
+  actionCount: number;
+}
+
+/** Lot d'envoi groupé, présenté comme « commande ». */
+export interface Batch {
+  batchId: string;
+  createdAt: string;
+  shipmentCount: number;
+  counts: {
+    created: number;
+    inTransit: number;
+    delivered: number;
+    exception: number;
+    voided: number;
+  };
+  completed: boolean;
+  totalCharges: number | null;
+  currency: string | null;
+}
+
+export interface BatchesResult {
+  batches: Batch[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface BatchDetail extends Batch {
+  shipments: StoredShipment[];
+}

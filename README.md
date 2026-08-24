@@ -58,6 +58,23 @@ comme avec l'autocomplétion Google.
 | Import CSV | `nom;destinataire;adresse;ville;code_postal;pays;telephone;groupe` — les groupes absents sont créés |
 | Carnet vide ou base absente | Le sélecteur disparaît : les pages restent utilisables |
 
+### Timeline et Commandes
+
+Trois notions distinctes, souvent confondues :
+
+| Page | Répond à | Source |
+|---|---|---|
+| **Timeline** (`/activity`) | Qui, dans l'équipe, a fait quoi et quand | Journal applicatif |
+| **Envois en cours** (`/shipments`) | Où en est ce colis chez UPS | APIs Tracking / QuantumView |
+| **Commandes** (`/batches`) | Où en est ce lot d'envoi groupé | Agrégation des envois par lot |
+
+La Timeline groupe les actions par jour (« Aujourd'hui », « Hier », puis la date),
+avec l'auteur, l'heure, un lien vers l'objet concerné et un repli « Détails ».
+Les filtres portent sur l'auteur, la famille d'action, la période et le texte.
+
+L'auteur vient du jeton Keycloak vérifié côté backend. Sans `KEYCLOAK_URL` sur le
+backend, les actions restent enregistrées mais s'affichent « Utilisateur inconnu ».
+
 ### Carte des points relais
 
 Les résultats sont affichés sur une carte Google avec des marqueurs numérotés,
@@ -82,6 +99,8 @@ les modifier ne demande pas de reconstruire l'image.
 | Coûts à l'import | `/landed-cost` | Droits de douane, taxes et frais pour l'international |
 | Documents douaniers | `/paperless` | Téléversement de factures commerciales dématérialisées |
 | Carnet d'adresses | `/addresses` | Adresses réutilisables partagées, groupes, import CSV |
+| Timeline | `/activity` | Journal des actions de l'équipe, avec auteur, filtres et détails |
+| Commandes | `/batches` | Lots d'envoi groupé : avancement, colis, coût total |
 
 > Enlèvement, Coûts à l'import et Documents douaniers nécessitent `UPS_ACCOUNT_NUMBER`
 > côté backend. Chaque API doit aussi être souscrite pour votre application sur

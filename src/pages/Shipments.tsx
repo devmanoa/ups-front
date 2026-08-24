@@ -383,7 +383,15 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
                 {shipment.primaryAnomaly.label}
               </Badge>
             )}
-            {shipment.batchId && <Badge tone="neutral">Lot</Badge>}
+            {shipment.batchId && (
+              <Link
+                to={`/batches/${encodeURIComponent(shipment.batchId)}`}
+                title="Voir la commande"
+                className="hover:opacity-80"
+              >
+                <Badge tone="neutral">Lot</Badge>
+              </Link>
+            )}
           </div>
 
           <p className="mt-1 text-[13px] text-[--k-text]">

@@ -28,6 +28,10 @@ import type {
   SavedAddress,
   AddressGroup,
   AddressesResult,
+  ActivityResult,
+  ActivityActor,
+  BatchesResult,
+  BatchDetail,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -197,6 +201,35 @@ export interface AddressesQuery {
   groupId?: string | number;
   includeArchived?: boolean;
 }
+
+export interface ActivityQuery {
+  actorId?: string;
+  action?: string;
+  entityType?: string;
+  entityId?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface BatchesQuery {
+  search?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/** Construit une chaîne de requête en ignorant les valeurs vides. */
+function toQueryString(params: object): string {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') qs.set(key, String(value));
+  }
+  return qs.toString() ? `?${qs}` : '';
+}
 export const api = {
   health: () => request<HealthResult>('/health'),
   testAuth: () => request<unknown>('/api/auth/test'),
@@ -275,6 +308,20 @@ export const api = {
     request<SavedAddress>(`/api/addresses/${id}/restore`, { method: 'POST', body: {} }),
   markAddressUsed: (id: number) =>
     request<SavedAddress>(`/api/addresses/${id}/use`, { method: 'POST', body: {} }),
+
+  // Journal d'activité : qui a fait quoi dans l'application.
+  // Distinct du suivi UPS, qui retrace le parcours du colis.
+  listActivity: (params: ActivityQuery = {}) =>
+    request<ActivityResult>(`/api/activity${toQueryString(params)}`),
+  listActivityActors: () => request<ActivityActor[]>('/api/activity/actors'),
+  getActivitySummary: (params: { from?: string; to?: string } = {}) =>
+    request<{ byAction: Record<string, number> }>(`/api/activity/summary${toQueryString(params)}`),
+
+  // Lots d'envoi groupé, presentés comme « commandes ».
+  listBatches: (params: BatchesQuery = {}) =>
+    request<BatchesResult>(`/api/batches${toQueryString(params)}`),
+  getBatch: (batchId: string) =>
+    request<BatchDetail>(`/api/batches/${encodeURIComponent(batchId)}`),
 
   listAddressGroups: () => request<AddressGroup[]>('/api/addresses/groups'),
   createAddressGroup: (name: string) =>

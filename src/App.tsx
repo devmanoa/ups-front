@@ -16,6 +16,8 @@ import LandedCost from './pages/LandedCost';
 import Pickup from './pages/Pickup';
 import Paperless from './pages/Paperless';
 import AddressBook from './pages/AddressBook';
+import Timeline from './pages/Timeline';
+import Batches, { BatchDetailPage } from './pages/Batches';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +59,9 @@ export default function App() {
                 <Route path="landed-cost" element={<LandedCost />} />
                 <Route path="paperless" element={<Paperless />} />
                 <Route path="addresses" element={<AddressBook />} />
+                <Route path="activity" element={<Timeline />} />
+                <Route path="batches" element={<Batches />} />
+                <Route path="batches/:batchId" element={<BatchDetailPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>

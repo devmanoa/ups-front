@@ -17,6 +17,8 @@ import {
   ChevronsRight,
   HelpCircle,
   BookUser,
+  History,
+  ClipboardList,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -48,6 +50,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
     items: [
       { label: 'Étiquettes', icon: Tag, to: '/shipping' },
       { label: 'Envoi groupé', icon: Layers, to: '/shipping/bulk' },
+      { label: 'Commandes', icon: ClipboardList, to: '/batches' },
       { label: 'Enlèvement', icon: Truck, to: '/pickup' },
     ],
   },
@@ -57,6 +60,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
       { label: 'Suivi de colis', icon: PackageSearch, to: '/tracking' },
       { label: 'Envois en cours', icon: Package, to: '/shipments' },
       { label: 'Anomalies', icon: AlertTriangle, to: '/anomalies' },
+      { label: 'Timeline', icon: History, to: '/activity' },
     ],
   },
   {

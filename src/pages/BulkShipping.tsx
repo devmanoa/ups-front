@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Layers, Plus, Trash2, Upload, CheckCircle2, XCircle, FileDown } from 'lucide-react';
+import { Layers, Plus, Trash2, Upload, CheckCircle2, XCircle, FileDown, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import type { BulkEntry, BulkResult } from '../types/ups';
@@ -358,7 +358,18 @@ function BulkReport({ result }: { result: BulkResult }) {
       </div>
 
       <Card>
-        <CardTitle title="Détail du lot" hint={result.batchId} />
+        <CardTitle
+          title="Détail du lot"
+          hint={result.batchId}
+          action={
+            <Link to={`/batches/${encodeURIComponent(result.batchId)}`}>
+              <Button type="button" variant="secondary" size="sm">
+                <ClipboardList className="h-4 w-4" />
+                Suivre cette commande
+              </Button>
+            </Link>
+          }
+        />
         <div className="space-y-1.5">
           {result.results.map((r) => (
             <div
