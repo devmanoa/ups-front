@@ -148,108 +148,94 @@ export default function PackageTypes() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:items-start">
-        <div className="space-y-4">
-          <Card>
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex flex-1 items-center gap-2 rounded-xl border border-[--k-border] bg-[--k-surface-2] px-3 py-2">
-                <Search className="h-4 w-4 shrink-0 text-[--k-muted]" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher un matériel…"
-                  className="w-full bg-transparent text-[13px] outline-none placeholder:text-[--k-muted]"
-                />
-                {search && (
-                  <button type="button" onClick={() => setSearch('')}>
-                    <X className="h-4 w-4 text-[--k-muted] hover:text-[--k-text]" />
-                  </button>
-                )}
-              </label>
+      <div className="space-y-4">
+        <Alert type="info">
+          Sur les pages <strong>Étiquettes</strong> et <strong>Tarifs</strong>, un sélecteur
+          « Charger un type de colis » remplit poids et dimensions en un clic. Dans l’envoi
+          groupé, une colonne <code className="rounded bg-white/60 px-1 font-mono">type</code> du
+          CSV suffit. Les valeurs restent modifiables au
+          moment de l’envoi : un cas particulier se corrige à la main, sans créer un type dédié.
+        </Alert>
 
-              <label className="inline-flex items-center gap-2 text-[13px] text-[--k-muted]">
-                <input
-                  type="checkbox"
-                  checked={includeArchived}
-                  onChange={(e) => setIncludeArchived(e.target.checked)}
+        <Card>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex flex-1 items-center gap-2 rounded-xl border border-[--k-border] bg-[--k-surface-2] px-3 py-2">
+              <Search className="h-4 w-4 shrink-0 text-[--k-muted]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher un matériel…"
+                className="w-full bg-transparent text-[13px] outline-none placeholder:text-[--k-muted]"
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch('')}>
+                  <X className="h-4 w-4 text-[--k-muted] hover:text-[--k-text]" />
+                </button>
+              )}
+            </label>
+
+            <label className="inline-flex items-center gap-2 text-[13px] text-[--k-muted]">
+              <input
+                type="checkbox"
+                checked={includeArchived}
+                onChange={(e) => setIncludeArchived(e.target.checked)}
+              />
+              Afficher les archivés
+            </label>
+          </div>
+        </Card>
+
+        {types.isLoading ? (
+          <Card>
+            <p className="text-[13px] text-[--k-muted]">Chargement du catalogue…</p>
+          </Card>
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={Boxes}
+            title={search ? 'Aucun type ne correspond' : 'Catalogue vide'}
+            description={
+              search
+                ? 'Essayez un autre terme de recherche.'
+                : 'Enregistrez votre matériel courant pour ne plus ressaisir son poids à chaque envoi.'
+            }
+          >
+            {!search && (
+              <Button type="button" onClick={() => openCreate()}>
+                <Plus className="h-4 w-4" />
+                Ajouter le premier type
+              </Button>
+            )}
+          </EmptyState>
+        ) : (
+          <Card>
+            <CardTitle
+              title="Matériel enregistré"
+              hint={`${items.length} type${items.length > 1 ? 's' : ''}`}
+            />
+            <div className="divide-y divide-[--k-border]">
+              {items.map((type) => (
+                <TypeRow
+                  key={type.id}
+                  type={type}
+                  packagingName={
+                    codes.data?.find((c) => c.code === type.packagingType)?.name ?? null
+                  }
+                  onEdit={() => openEdit(type)}
+                  onArchive={() => archive.mutate({ id: type.id, hard: false })}
+                  onDelete={() => archive.mutate({ id: type.id, hard: true })}
+                  onRestore={() => restore.mutate(type.id)}
+                  onToggleDefault={() => setDefault.mutate(type)}
                 />
-                Afficher les archivés
-              </label>
+              ))}
             </div>
           </Card>
+        )}
 
-          {types.isLoading ? (
-            <Card>
-              <p className="text-[13px] text-[--k-muted]">Chargement du catalogue…</p>
-            </Card>
-          ) : items.length === 0 ? (
-            <EmptyState
-              icon={Boxes}
-              title={search ? 'Aucun type ne correspond' : 'Catalogue vide'}
-              description={
-                search
-                  ? 'Essayez un autre terme de recherche.'
-                  : 'Enregistrez votre matériel courant pour ne plus ressaisir son poids à chaque envoi.'
-              }
-            >
-              {!search && (
-                <Button type="button" onClick={() => openCreate()}>
-                  <Plus className="h-4 w-4" />
-                  Ajouter le premier type
-                </Button>
-              )}
-            </EmptyState>
-          ) : (
-            <Card>
-              <CardTitle
-                title="Matériel enregistré"
-                hint={`${items.length} type${items.length > 1 ? 's' : ''}`}
-              />
-              <div className="divide-y divide-[--k-border]">
-                {items.map((type) => (
-                  <TypeRow
-                    key={type.id}
-                    type={type}
-                    packagingName={
-                      codes.data?.find((c) => c.code === type.packagingType)?.name ?? null
-                    }
-                    onEdit={() => openEdit(type)}
-                    onArchive={() => archive.mutate({ id: type.id, hard: false })}
-                    onDelete={() => archive.mutate({ id: type.id, hard: true })}
-                    onRestore={() => restore.mutate(type.id)}
-                    onToggleDefault={() => setDefault.mutate(type)}
-                  />
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {(archive.isError || restore.isError || setDefault.isError) && (
-            <Alert type="error">
-              {((archive.error || restore.error || setDefault.error) as Error).message}
-            </Alert>
-          )}
-        </div>
-
-        <div className="lg:sticky lg:top-4">
-          <Card>
-            <CardTitle title="À quoi ça sert" />
-            <p className="text-[13px] text-[--k-muted]">
-              Sur les pages <strong className="text-[--k-text]">Étiquettes</strong> et{' '}
-              <strong className="text-[--k-text]">Tarifs</strong>, un sélecteur « Charger un type
-              de colis » remplit poids et dimensions en un clic. Indiquez une quantité pour
-              ajouter plusieurs colis identiques d’un coup.
-            </p>
-            <p className="mt-3 text-[13px] text-[--k-muted]">
-              Dans l’envoi groupé, une colonne <code>type</code> du CSV suffit : le poids est
-              retrouvé automatiquement.
-            </p>
-            <p className="mt-3 text-[12px] text-[--k-muted]">
-              Les valeurs restent modifiables au moment de l’envoi : un cas particulier se corrige
-              à la main, sans créer un type dédié.
-            </p>
-          </Card>
-        </div>
+        {(archive.isError || restore.isError || setDefault.isError) && (
+          <Alert type="error">
+            {((archive.error || restore.error || setDefault.error) as Error).message}
+          </Alert>
+        )}
       </div>
 
       <Modal
