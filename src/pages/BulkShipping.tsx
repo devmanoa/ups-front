@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Layers, Plus, Trash2, Upload, CheckCircle2, XCircle, FileDown, ClipboardList } from 'lucide-react';
+import { Layers, Plus, Trash2, Upload, CheckCircle2, XCircle, FileDown, ClipboardList, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import type { BulkEntry, BulkResult } from '../types/ups';
@@ -11,6 +11,7 @@ import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 import { AddressPicker } from '../components/ui/AddressPicker';
+import { printImages } from '../utils/format';
 
 const CSV_HEADER = 'nom;adresse;ville;code_postal;pays;poids;reference;type';
 const CSV_EXAMPLE = `${CSV_HEADER}
@@ -24,7 +25,8 @@ const emptyEntry = (): BulkEntry => ({
 
 /**
  * Analyse un CSV point-virgule. La première ligne peut être l'en-tête.
- * Format attendu : nom;adresse;ville;code_postal;pays;poids;reference
+ * Format attendu : nom;adresse;ville;code_postal;pays;poids;reference;type
+ * La colonne « type » désigne un type du catalogue et dispense du poids.
  */
 function parseCsv(text: string): { entries: BulkEntry[]; errors: string[] } {
   const entries: BulkEntry[] = [];
@@ -370,6 +372,12 @@ export default function BulkShipping() {
 }
 
 function BulkReport({ result }: { result: BulkResult }) {
+  // Étiquettes image de tout le lot, dans l'ordre des lignes du fichier.
+  const labels = result.results
+    .flatMap((r) => r.shipment?.packages ?? [])
+    .map((p) => p.label)
+    .filter((l): l is NonNullable<typeof l> => Boolean(l?.mime.startsWith('image/')));
+
   return (
     <div className="mt-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[--k-border] bg-[--k-surface] px-4 py-3">
@@ -385,11 +393,21 @@ function BulkReport({ result }: { result: BulkResult }) {
             </span>
           )}
         </div>
-        <Link to="/shipments">
-          <Button type="button" variant="secondary" size="sm">
-            Voir les envois
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          {/* Toutes les étiquettes du lot en une seule boîte de dialogue :
+              une par page, plutôt qu'un dialogue par colis. */}
+          {labels.length > 0 && (
+            <Button type="button" size="sm" onClick={() => printImages(labels)}>
+              <Printer className="h-4 w-4" />
+              Imprimer les {labels.length} étiquettes
+            </Button>
+          )}
+          <Link to="/shipments">
+            <Button type="button" variant="secondary" size="sm">
+              Voir les envois
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>

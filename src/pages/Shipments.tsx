@@ -5,6 +5,7 @@ import {
   RefreshCw,
   RadioTower,
   Download,
+  Printer,
   XCircle,
   ExternalLink,
   ChevronLeft,
@@ -25,7 +26,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
-import { money, downloadBase64, formatDate } from '../utils/format';
+import { money, downloadBase64, printBase64, formatDate } from '../utils/format';
 
 const PAGE_SIZE = 25;
 
@@ -345,13 +346,21 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
   const meta = STATUS_META[shipment.status] ?? STATUS_META.created;
   const StatusIcon = meta.icon;
 
-  // L'étiquette n'est pas chargée avec la liste : elle pèse lourd en base64.
-  const download = async () => {
+  /**
+   * L'étiquette n'est pas chargée avec la liste : elle pèse lourd en base64.
+   * Elle est donc récupérée à la demande, pour l'imprimer ou la télécharger.
+   */
+  const fetchLabel = async (action: 'print' | 'download') => {
     if (!shipment.trackingNumber) return;
     setDownloading(true);
     try {
       const label = await api.getShipmentLabel(shipment.trackingNumber);
       const mime = label.format === 'PDF' ? 'application/pdf' : 'image/gif';
+
+      // Un format thermique ne s'imprime pas depuis le navigateur : on
+      // retombe sur le téléchargement plutôt que de ne rien faire.
+      if (action === 'print' && printBase64(label.base64, mime)) return;
+
       const ext = (label.format || 'gif').toLowerCase();
       downloadBase64(label.base64, mime, `etiquette-${label.trackingNumber}.${ext}`);
     } catch {
@@ -430,16 +439,30 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
               </Link>
             )}
             {shipment.hasLabel && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                isLoading={downloading}
-                onClick={download}
-              >
-                {!downloading && <Download className="h-3.5 w-3.5" />}
-                Étiquette
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  isLoading={downloading}
+                  title="Ouvrir la boîte de dialogue d'impression"
+                  onClick={() => fetchLabel('print')}
+                >
+                  {!downloading && <Printer className="h-3.5 w-3.5" />}
+                  Imprimer
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  isLoading={downloading}
+                  title="Télécharger l'étiquette"
+                  onClick={() => fetchLabel('download')}
+                >
+                  {!downloading && <Download className="h-3.5 w-3.5" />}
+                  Étiquette
+                </Button>
+              </>
             )}
             {shipment.status !== 'voided' && shipment.status !== 'delivered' && (
               <Button

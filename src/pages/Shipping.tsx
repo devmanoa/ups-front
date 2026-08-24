@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Tag, Download, XCircle, CheckCircle2, Receipt } from 'lucide-react';
+import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer } from 'lucide-react';
 import { api, type ShipmentPayload } from '../services/api';
 import type { PackageInput, ShipmentResult, VoidResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -13,7 +13,7 @@ import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
 import { AddressPicker, SaveToBook } from '../components/ui/AddressPicker';
 import Button from '../components/ui/Button';
 import { PackagesEditor, emptyPackage } from '../components/PackagesEditor';
-import { money, downloadBase64 } from '../utils/format';
+import { money, downloadBase64, printBase64, isPrintable } from '../utils/format';
 
 const LABEL_FORMATS = [
   { value: 'GIF', label: 'GIF (image)' },
@@ -29,6 +29,20 @@ const REQUIRED_FIELDS: Array<{ key: keyof Address; label: string }> = [
   { key: 'country', label: 'pays' },
 ];
 
+/** Préférence d'impression automatique, retenue d'une session à l'autre. */
+const AUTOPRINT_KEY = 'ups.autoprint';
+
+function readAutoPrint(): boolean {
+  try {
+    // Activée par défaut : c'est le comportement du site UPS, et l'intérêt
+    // même de la fonction. Le réglage sert à s'en passer.
+    return localStorage.getItem(AUTOPRINT_KEY) !== 'false';
+  } catch {
+    // Navigation privée ou stockage bloqué : on garde le défaut.
+    return true;
+  }
+}
+
 export default function Shipping() {
   const [shipTo, setShipTo] = useState<Address>({ country: 'FR' });
   const [packages, setPackages] = useState<PackageInput[]>([emptyPackage()]);
@@ -43,8 +57,18 @@ export default function Shipping() {
     staleTime: Infinity,
   });
 
+  const [autoPrint, setAutoPrint] = useState(readAutoPrint);
+
   const mutation = useMutation<ShipmentResult, Error, ShipmentPayload>({
     mutationFn: (payload) => api.createShipment(payload),
+    onSuccess: (result) => {
+      if (!autoPrint) return;
+
+      // Une seule boîte de dialogue par expédition : imprimer colis par colis
+      // enchaînerait autant de dialogues qu'il y a d'étiquettes.
+      const first = result.packages?.find((p) => p.label && isPrintable(p.label.mime));
+      if (first?.label) printBase64(first.label.base64, first.label.mime);
+    },
   });
 
   const voidMutation = useMutation<VoidResult, Error, string>({
@@ -201,6 +225,30 @@ export default function Shipping() {
                 value={accessPointLocationId}
                 onChange={(e) => setAccessPointLocationId(e.target.value)}
               />
+
+              <label className="flex items-center gap-2 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={autoPrint}
+                  onChange={(e) => {
+                    setAutoPrint(e.target.checked);
+                    try {
+                      localStorage.setItem(AUTOPRINT_KEY, String(e.target.checked));
+                    } catch {
+                      // Stockage indisponible : le choix ne vaut que pour cette session.
+                    }
+                  }}
+                />
+                <span className="text-[13px] text-[--k-text]">
+                  Ouvrir l’impression dès l’étiquette créée
+                  {labelFormat === 'ZPL' && (
+                    <span className="text-[--k-muted]">
+                      {' '}
+                      — sans effet en ZPL, format réservé aux imprimantes thermiques
+                    </span>
+                  )}
+                </span>
+              </label>
             </div>
 
             <SubmitBar
@@ -256,21 +304,36 @@ export default function Shipping() {
                       </p>
                     </div>
                     {pkg.label && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                          downloadBase64(
-                            pkg.label!.base64,
-                            pkg.label!.mime,
-                            `etiquette-${pkg.trackingNumber}.${pkg.label!.ext}`
-                          )
-                        }
-                      >
-                        <Download className="h-4 w-4" />
-                        Télécharger
-                      </Button>
+                      <div className="flex gap-2">
+                        {/* Les formats thermiques (ZPL, EPL, SPL) ne s'impriment
+                            pas depuis le navigateur : seul le téléchargement
+                            a du sens pour eux. */}
+                        {isPrintable(pkg.label.mime) && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => printBase64(pkg.label!.base64, pkg.label!.mime)}
+                          >
+                            <Printer className="h-4 w-4" />
+                            Imprimer
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            downloadBase64(
+                              pkg.label!.base64,
+                              pkg.label!.mime,
+                              `etiquette-${pkg.trackingNumber}.${pkg.label!.ext}`
+                            )
+                          }
+                        >
+                          <Download className="h-4 w-4" />
+                          Télécharger
+                        </Button>
+                      </div>
                     )}
                   </div>
                   {pkg.label?.mime.startsWith('image/') && (

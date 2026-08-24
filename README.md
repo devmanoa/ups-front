@@ -77,6 +77,27 @@ d'ajouter plusieurs colis identiques d'un coup : trois bornes, une seule action.
 Le poids seul est obligatoire ; les dimensions sont facultatives, UPS ne les
 prenant en compte que si les trois sont renseignées.
 
+### Impression des étiquettes
+
+L'impression s'ouvre **automatiquement dès l'étiquette créée**, comme sur le site
+UPS. La case « Ouvrir l'impression dès l'étiquette créée », dans les options
+d'expédition, permet de s'en passer — le choix est retenu d'une session à l'autre.
+
+Un bouton **Imprimer** est aussi disponible sur chaque étiquette créée et sur
+chaque ligne de la page « Envois en cours », pour réimprimer plus tard.
+
+| Format | Comportement |
+|---|---|
+| GIF, PDF | Impression directe, sans onglet ni fenêtre surgissante |
+| ZPL, EPL, SPL | Téléchargement seul : ce sont des langages de commande pour imprimantes thermiques, illisibles par une imprimante bureautique |
+
+Sur un envoi groupé, un bouton imprime **toutes les étiquettes du lot en une
+seule boîte de dialogue**, une par page : enchaîner vingt dialogues n'aurait pas
+d'intérêt.
+
+L'étiquette est rendue dans une iframe masquée, donc rien à autoriser ni à
+refermer. Si le navigateur refuse l'impression, l'étiquette reste téléchargeable.
+
 ### Timeline et Commandes
 
 Trois notions distinctes, souvent confondues :
