@@ -19,6 +19,15 @@ export interface PackageInput {
   width?: string;
   height?: string;
   reference?: string;
+  // Renseignes depuis le catalogue de types de colis. Le backend les lit
+  // deja (buildPackage) : ils n'etaient simplement jamais envoyes.
+  description?: string;
+  packagingType?: string;
+  /**
+   * Nom d'un type du catalogue, resolu par le backend en poids et dimensions
+   * (envoi groupe). Le champ ne part jamais chez UPS.
+   */
+  packageType?: string;
 }
 
 export interface TrackActivity {
@@ -411,4 +420,33 @@ export interface BatchesResult {
 
 export interface BatchDetail extends Batch {
   shipments: StoredShipment[];
+}
+
+/** Type de colis pré-enregistré : matériel expédié régulièrement. */
+export interface PackageType {
+  id: number;
+  label: string;
+  weight: string;
+  length: string;
+  width: string;
+  height: string;
+  description: string | null;
+  packagingType: string;
+  reference: string | null;
+  isDefault: boolean;
+  usageCount: number;
+  lastUsedAt: string | null;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PackageTypesResult {
+  types: PackageType[];
+  count: number;
+}
+
+export interface PackagingCode {
+  code: string;
+  name: string;
 }

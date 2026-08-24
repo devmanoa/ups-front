@@ -58,6 +58,25 @@ comme avec l'autocomplétion Google.
 | Import CSV | `nom;destinataire;adresse;ville;code_postal;pays;telephone;groupe` — les groupes absents sont créés |
 | Carnet vide ou base absente | Le sélecteur disparaît : les pages restent utilisables |
 
+### Types de colis
+
+Le matériel expédié régulièrement (DS620, QW410, Magnets, bornes…) est enregistré
+une fois avec son poids et ses dimensions, puis rechargé en un clic.
+
+Le sélecteur « Charger un type de colis » apparaît sur **Étiquettes** et **Tarifs**
+— les deux pages partagent le même éditeur de colis. Un champ quantité permet
+d'ajouter plusieurs colis identiques d'un coup : trois bornes, une seule action.
+
+| Comportement | Détail |
+|---|---|
+| Premier colis vierge | Remplacé par le type chargé, plutôt que de laisser un colis vide de 1 kg |
+| Valeurs chargées | Modifiables : un cas particulier se corrige sans créer un type dédié |
+| Envoi groupé | Colonne `type` du CSV : le poids est retrouvé côté backend |
+| Catalogue vide ou base absente | Le sélecteur disparaît, les pages restent utilisables |
+
+Le poids seul est obligatoire ; les dimensions sont facultatives, UPS ne les
+prenant en compte que si les trois sont renseignées.
+
 ### Timeline et Commandes
 
 Trois notions distinctes, souvent confondues :
@@ -99,6 +118,7 @@ les modifier ne demande pas de reconstruire l'image.
 | Coûts à l'import | `/landed-cost` | Droits de douane, taxes et frais pour l'international |
 | Documents douaniers | `/paperless` | Téléversement de factures commerciales dématérialisées |
 | Carnet d'adresses | `/addresses` | Adresses réutilisables partagées, groupes, import CSV |
+| Types de colis | `/package-types` | Matériel pré-enregistré : poids, dimensions, emballage |
 | Timeline | `/activity` | Journal des actions de l'équipe, avec auteur, filtres et détails |
 | Commandes | `/batches` | Lots d'envoi groupé : avancement, colis, coût total |
 

@@ -32,6 +32,9 @@ import type {
   ActivityActor,
   BatchesResult,
   BatchDetail,
+  PackageType,
+  PackageTypesResult,
+  PackagingCode,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -214,6 +217,18 @@ export interface ActivityQuery {
   offset?: number;
 }
 
+export interface PackageTypePayload {
+  label: string;
+  weight: string;
+  length?: string;
+  width?: string;
+  height?: string;
+  description?: string;
+  packagingType?: string;
+  reference?: string;
+  isDefault?: boolean;
+}
+
 export interface BatchesQuery {
   search?: string;
   from?: string;
@@ -322,6 +337,23 @@ export const api = {
     request<BatchesResult>(`/api/batches${toQueryString(params)}`),
   getBatch: (batchId: string) =>
     request<BatchDetail>(`/api/batches/${encodeURIComponent(batchId)}`),
+
+  // Catalogue des types de colis : le matériel expédié régulièrement.
+  listPackageTypes: (params: { search?: string; includeArchived?: boolean } = {}) =>
+    request<PackageTypesResult>(`/api/package-types${toQueryString(params)}`),
+  createPackageType: (payload: PackageTypePayload) =>
+    request<PackageType>('/api/package-types', { method: 'POST', body: payload }),
+  updatePackageType: (id: number, payload: Partial<PackageTypePayload>) =>
+    request<PackageType>(`/api/package-types/${id}`, { method: 'PUT', body: payload }),
+  archivePackageType: (id: number, hard = false) =>
+    request<PackageType>(`/api/package-types/${id}${hard ? '?hard=true' : ''}`, {
+      method: 'DELETE',
+    }),
+  restorePackageType: (id: number) =>
+    request<PackageType>(`/api/package-types/${id}/restore`, { method: 'POST', body: {} }),
+  markPackageTypeUsed: (id: number) =>
+    request<PackageType>(`/api/package-types/${id}/use`, { method: 'POST', body: {} }),
+  getPackagingCodes: () => request<PackagingCode[]>('/api/package-types/packaging-codes'),
 
   listAddressGroups: () => request<AddressGroup[]>('/api/addresses/groups'),
   createAddressGroup: (name: string) =>

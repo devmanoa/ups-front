@@ -1,7 +1,8 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Boxes } from 'lucide-react';
 import type { PackageInput } from '../types/ups';
 import { Field } from './ui/Field';
 import Button from './ui/Button';
+import { PackageTypePicker } from './ui/PackageTypePicker';
 
 interface PackagesEditorProps {
   packages: PackageInput[];
@@ -22,12 +23,39 @@ export function PackagesEditor({ packages, onChange, withReference = false }: Pa
     if (packages.length > 1) onChange(packages.filter((_, i) => i !== index));
   };
 
+  /**
+   * Un type chargé remplace le premier colis s'il est encore vierge, sinon
+   * il s'ajoute : ouvrir la page puis charger « DS620 » ne doit pas laisser
+   * un colis vide de 1 kg en tête de liste.
+   */
+  const addFromType = (added: PackageInput[]) => {
+    const onlyUntouched =
+      packages.length === 1 &&
+      packages[0].weight === '1' &&
+      !packages[0].length &&
+      !packages[0].width &&
+      !packages[0].height &&
+      !packages[0].reference;
+
+    onChange(onlyUntouched ? added : [...packages, ...added]);
+  };
+
   return (
     <div className="space-y-2">
+      <PackageTypePicker className="mb-1" onSelect={addFromType} />
+
       {packages.map((pkg, i) => (
         <div key={i} className="rounded-xl border border-[--k-border] bg-[--k-bg]/40 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-[--k-muted]">Colis {i + 1}</span>
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[--k-muted]">
+              Colis {i + 1}
+              {pkg.description && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-[--k-primary-2] px-1.5 py-0.5 text-[11px] font-medium text-indigo-700">
+                  <Boxes className="h-3 w-3" />
+                  {pkg.description}
+                </span>
+              )}
+            </span>
             {packages.length > 1 && (
               <button
                 type="button"

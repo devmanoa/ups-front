@@ -12,10 +12,10 @@ import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 import { AddressPicker } from '../components/ui/AddressPicker';
 
-const CSV_HEADER = 'nom;adresse;ville;code_postal;pays;poids;reference';
+const CSV_HEADER = 'nom;adresse;ville;code_postal;pays;poids;reference;type';
 const CSV_EXAMPLE = `${CSV_HEADER}
-Jean Dupont;10 rue Victor Hugo;Lyon;69001;FR;2;CMD-001
-Marie Martin;5 avenue de la Gare;Nantes;44000;FR;1.5;CMD-002`;
+Jean Dupont;10 rue Victor Hugo;Lyon;69001;FR;2;CMD-001;
+Marie Martin;5 avenue de la Gare;Nantes;44000;FR;;CMD-002;DS620`;
 
 const emptyEntry = (): BulkEntry => ({
   shipTo: { country: 'FR' },
@@ -40,17 +40,28 @@ function parseCsv(text: string): { entries: BulkEntry[]; errors: string[] } {
     if (i === 0 && /nom\s*;/i.test(line)) continue;
 
     const cols = line.split(';').map((c) => c.trim());
-    const [name, address, city, postalCode, country, weight, reference] = cols;
+    const [name, address, city, postalCode, country, weight, reference, packageType] = cols;
 
     if (!name || !address || !city || !postalCode) {
       errors.push(`Ligne ${i + 1} : nom, adresse, ville et code postal sont obligatoires.`);
       continue;
     }
 
-    const weightNum = Number((weight || '1').replace(',', '.'));
-    if (!Number.isFinite(weightNum) || weightNum <= 0) {
-      errors.push(`Ligne ${i + 1} : poids invalide (« ${weight} »).`);
+    // Un type nommé dispense de renseigner le poids : le backend le retrouve
+    // dans le catalogue. Sans type ni poids, on retombe sur 1 kg.
+    if (!weight && !packageType) {
+      errors.push(`Ligne ${i + 1} : indiquez un poids ou un type de colis.`);
       continue;
+    }
+
+    let weightValue: string | undefined;
+    if (weight) {
+      const weightNum = Number(weight.replace(',', '.'));
+      if (!Number.isFinite(weightNum) || weightNum <= 0) {
+        errors.push(`Ligne ${i + 1} : poids invalide (« ${weight} »).`);
+        continue;
+      }
+      weightValue = String(weightNum);
     }
 
     entries.push({
@@ -61,7 +72,15 @@ function parseCsv(text: string): { entries: BulkEntry[]; errors: string[] } {
         postalCode,
         country: (country || 'FR').toUpperCase(),
       },
-      packages: [{ weight: String(weightNum), reference: reference || undefined }],
+      packages: [
+        {
+          // Le poids reste requis par le formulaire : le type le fournira
+          // côté backend, mais l'affichage a besoin d'une valeur.
+          weight: weightValue ?? '',
+          reference: reference || undefined,
+          packageType: packageType || undefined,
+        },
+      ],
     });
   }
 
@@ -124,21 +143,30 @@ export default function BulkShipping() {
     URL.revokeObjectURL(url);
   };
 
-  const invalid = entries.some(
-    (e) =>
+  /**
+   * Une ligne est valide si elle porte un poids OU un type de colis : dans
+   * ce second cas, le backend retrouve le poids dans le catalogue.
+   */
+  const invalid = entries.some((e) => {
+    const pkg = e.packages[0];
+    const weighed = pkg?.packageType
+      ? true
+      : Boolean(pkg?.weight) && Number(pkg.weight) > 0;
+
+    return (
       !e.shipTo.name ||
       !e.shipTo.addressLine1 ||
       !e.shipTo.city ||
       !e.shipTo.postalCode ||
       !e.shipTo.country ||
-      !e.packages[0]?.weight ||
-      Number(e.packages[0].weight) <= 0,
-  );
+      !weighed
+    );
+  });
 
   const blockedReason = entries.length === 0
     ? 'Ajoutez au moins un destinataire'
     : invalid
-      ? 'Chaque ligne doit être complète (nom, adresse, ville, code postal, pays, poids)'
+      ? 'Chaque ligne doit être complète (nom, adresse, ville, code postal, pays, et poids ou type)'
       : entries.length > 50
         ? '50 expéditions maximum par lot'
         : null;
@@ -166,7 +194,7 @@ export default function BulkShipping() {
         <Card>
           <CardTitle
             title="Import CSV"
-            hint={`Colonnes attendues : ${CSV_HEADER.replace(/;/g, ', ')}`}
+            hint={`Colonnes attendues : ${CSV_HEADER.replace(/;/g, ', ')} — « type » dispense de renseigner le poids`}
           />
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[--k-border] bg-[--k-bg]/40 px-4 py-4 text-[13px] transition hover:border-[--k-primary]/40 hover:bg-[--k-primary-2]/20">
             <Upload className="h-4 w-4 text-[--k-primary]" />
@@ -257,10 +285,17 @@ export default function BulkShipping() {
                   <div className="sm:col-span-3">
                     <Field
                       label="Poids (kg)"
-                      required
+                      required={!entry.packages[0]?.packageType}
                       type="number"
                       step="0.1"
                       min="0.1"
+                      // Un type nommé fournit le poids côté backend : le champ
+                      // reste modifiable pour traiter un cas particulier.
+                      placeholder={
+                        entry.packages[0]?.packageType
+                          ? `depuis ${entry.packages[0].packageType}`
+                          : undefined
+                      }
                       value={entry.packages[0]?.weight ?? ''}
                       onChange={(e) => updateWeight(i, e.target.value)}
                     />
