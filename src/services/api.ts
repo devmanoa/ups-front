@@ -32,6 +32,7 @@ import type {
   ActivityActor,
   ShipmentDetail,
   ShipmentComment,
+  AntenneContact,
   BatchesResult,
   BatchDetail,
   PackageType,
@@ -131,6 +132,8 @@ export interface ShipmentPayload {
   description?: string;
   labelFormat?: string;
   accessPointLocationId?: string;
+  /** Antenne d'origine, quand la page vient d'un lien Antennes. */
+  antenne?: { contactId: number; antenneId: number | null };
 }
 
 export interface LocatorPayload {
@@ -298,6 +301,10 @@ export const api = {
     request<StatsResult>(`/api/shipments/stats${toQueryString(params)}`),
   getShipmentLabel: (trackingNumber: string) =>
     request<StoredLabel>(`/api/shipments/${encodeURIComponent(trackingNumber)}/label`),
+
+  /** Contact Antennes, pour préremplir une étiquette depuis un lien externe. */
+  getAntenneContact: (contactId: string | number) =>
+    request<AntenneContact>(`/api/antennes/${encodeURIComponent(String(contactId))}`),
 
   /** Toutes les étiquettes de l'expédition, un envoi multi-colis en ayant plusieurs. */
   getShipmentLabels: (trackingNumber: string) =>

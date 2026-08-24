@@ -259,6 +259,17 @@ export interface StoredShipment {
   localShipmentId?: string;
 }
 
+/** Contact de l'application Antennes, prêt à remplir le formulaire. */
+export interface AntenneContact {
+  contactId: number;
+  antenneId: number | null;
+  antenneVille: string | null;
+  qualification: string | null;
+  etat: string | null;
+  recipient: Address & { email?: string };
+  coordinates: { lat: number; lng: number } | null;
+}
+
 /** Auteur d'une action ou d'un commentaire, recopié depuis Keycloak. */
 export interface ShipmentActor {
   id: string | null;

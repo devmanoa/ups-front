@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer, Truck } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer, Truck, Building2 } from 'lucide-react';
 import { api, type ShipmentPayload } from '../services/api';
 import type { PackageInput, ShipmentResult, VoidResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -45,6 +45,11 @@ function readAutoPrint(): boolean {
 }
 
 export default function Shipping() {
+  const [searchParams] = useSearchParams();
+  // Identifiant d'antenne passé par l'application Antennes
+  // (`/shipping?antenne=10`). Le jeton d'accès reste côté backend.
+  const antenneId = searchParams.get('antenne');
+
   const [shipTo, setShipTo] = useState<Address>({ country: 'FR' });
   const [packages, setPackages] = useState<PackageInput[]>([emptyPackage()]);
   const [description, setDescription] = useState('Marchandise');
@@ -59,6 +64,30 @@ export default function Shipping() {
   });
 
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
+
+  const antenne = useQuery({
+    queryKey: ['antenne', antenneId],
+    queryFn: () => api.getAntenneContact(antenneId!),
+    enabled: Boolean(antenneId),
+    retry: false,
+    staleTime: Infinity,
+  });
+
+  /**
+   * Remplit le destinataire dès que l'antenne est chargée.
+   *
+   * `hasFilled` évite d'écraser une correction : sans lui, react-query
+   * réhydratant le cache remettrait l'adresse d'origine et effacerait ce que
+   * l'utilisateur vient de saisir.
+   */
+  const hasFilled = useRef(false);
+  useEffect(() => {
+    if (!antenne.data || hasFilled.current) return;
+    hasFilled.current = true;
+
+    const { email, ...address } = antenne.data.recipient;
+    setShipTo((prev) => ({ ...prev, ...address }));
+  }, [antenne.data]);
 
   const mutation = useMutation<ShipmentResult, Error, ShipmentPayload>({
     mutationFn: (payload) => api.createShipment(payload),
@@ -102,6 +131,11 @@ export default function Shipping() {
       description,
       labelFormat,
       accessPointLocationId: accessPointLocationId || undefined,
+      // Rattache l'envoi à son antenne d'origine : sans cela, impossible de
+      // savoir plus tard pour quelle antenne l'étiquette a été faite.
+      antenne: antenne.data
+        ? { contactId: antenne.data.contactId, antenneId: antenne.data.antenneId }
+        : undefined,
     });
   };
 
@@ -111,6 +145,36 @@ export default function Shipping() {
         title="Création d'étiquette"
         subtitle="Crée une expédition sur le compte UPS configuré et génère l'étiquette."
       />
+
+      {/* Provenance annoncée : sans elle, on ne saurait pas d'où vient une
+          adresse déjà remplie, ni qu'elle reste modifiable. */}
+      {antenneId && antenne.isLoading && (
+        <Alert type="info" className="mb-4">
+          Chargement de l’adresse de l’antenne…
+        </Alert>
+      )}
+
+      {antenne.isError && (
+        <Alert type="error" className="mb-4">
+          {(antenne.error as Error).message} — saisissez l’adresse à la main.
+        </Alert>
+      )}
+
+      {antenne.data && (
+        <Alert type="info" className="mb-4">
+          <span className="inline-flex flex-wrap items-center gap-x-1.5">
+            <Building2 className="h-4 w-4" />
+            Adresse préremplie depuis l’antenne
+            <strong>
+              {antenne.data.antenneVille ?? `n° ${antenne.data.contactId}`}
+            </strong>
+            {antenne.data.etat && antenne.data.etat !== 'actif' && (
+              <strong className="text-[--k-danger]">— antenne {antenne.data.etat}</strong>
+            )}
+            <span className="text-[--k-muted]">· modifiable avant validation</span>
+          </span>
+        </Alert>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
         <form onSubmit={submit} className="space-y-4">
