@@ -10,6 +10,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { AddressPicker, SaveToBook } from '../components/ui/AddressPicker';
 import Button from '../components/ui/Button';
 import { PackagesEditor, emptyPackage } from '../components/PackagesEditor';
 import { money, downloadBase64 } from '../utils/format';
@@ -84,6 +85,11 @@ export default function Shipping() {
         <form onSubmit={submit} className="space-y-4">
           <Card>
             <CardTitle title="Destinataire" />
+            <AddressPicker
+              className="mb-3"
+              autoLoadDefault
+              onSelect={(address) => setShipTo(address)}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               <Field
                 label="Nom"
@@ -220,6 +226,10 @@ export default function Shipping() {
                     {mutation.data.shipmentIdentificationNumber}
                   </p>
                 </div>
+              </div>
+
+              <div className="rounded-xl border border-[--k-border] bg-[--k-surface] p-3">
+                <SaveToBook address={shipTo} suggestedLabel={shipTo.name} />
               </div>
 
               <div className="flex items-center justify-between gap-3 rounded-xl border border-[--k-border] bg-[--k-surface] px-4 py-3">

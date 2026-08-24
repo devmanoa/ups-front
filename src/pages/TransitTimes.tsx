@@ -11,6 +11,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { AddressPicker } from '../components/ui/AddressPicker';
 
 /** Date du jour au format AAAA-MM-JJ, valeur par défaut d'expédition. */
 function today(): string {
@@ -61,6 +62,7 @@ export default function TransitTimes() {
         <form onSubmit={submit}>
           <Card>
             <CardTitle title="Destination et envoi" />
+            <AddressPicker className="mb-3" onSelect={(address) => setShipTo(address)} />
             <div className="grid gap-3 sm:grid-cols-6">
               <div className="sm:col-span-6">
                 <AddressAutocomplete

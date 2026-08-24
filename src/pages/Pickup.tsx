@@ -10,6 +10,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { AddressPicker } from '../components/ui/AddressPicker';
 import Button from '../components/ui/Button';
 import { money } from '../utils/format';
 
@@ -94,6 +95,7 @@ export default function Pickup() {
         <form onSubmit={submit} className="space-y-4">
           <Card>
             <CardTitle title="Adresse d'enlèvement" />
+            <AddressPicker className="mb-3" onSelect={(address) => setAddress(address)} />
             <div className="grid gap-3 sm:grid-cols-6">
               <div className="sm:col-span-6">
                 <AddressAutocomplete

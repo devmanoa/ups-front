@@ -11,6 +11,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { AddressPicker } from '../components/ui/AddressPicker';
 import { PackagesEditor, emptyPackage } from '../components/PackagesEditor';
 import { money } from '../utils/format';
 
@@ -68,6 +69,7 @@ export default function Rating() {
         <form onSubmit={submit} className="space-y-4">
           <Card>
             <CardTitle title="Destination" />
+            <AddressPicker className="mb-3" onSelect={(address) => setShipTo(address)} />
             <div className="grid gap-3 sm:grid-cols-6">
               <div className="sm:col-span-6">
                 <AddressAutocomplete

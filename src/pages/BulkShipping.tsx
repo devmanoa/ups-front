@@ -10,6 +10,7 @@ import { Alert } from '../components/ui/Alert';
 import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
+import { AddressPicker } from '../components/ui/AddressPicker';
 
 const CSV_HEADER = 'nom;adresse;ville;code_postal;pays;poids;reference';
 const CSV_EXAMPLE = `${CSV_HEADER}
@@ -204,6 +205,12 @@ export default function BulkShipping() {
                     </button>
                   )}
                 </div>
+
+                <AddressPicker
+                  className="mb-2"
+                  label="Remplir depuis le carnet"
+                  onSelect={(address) => update(i, address)}
+                />
 
                 <div className="grid gap-3 sm:grid-cols-12">
                   <div className="sm:col-span-4">

@@ -333,3 +333,29 @@ export interface HealthResult {
   apiVersions: Record<string, string>;
   token: { cached: boolean; expiresAt: string | null; valid: boolean };
 }
+
+/** Entrée du carnet d'adresses : une Address enrichie de ses métadonnées. */
+export interface SavedAddress extends Address {
+  id: number;
+  label: string;
+  groupId: number | null;
+  isDefault: boolean;
+  usageCount: number;
+  lastUsedAt: string | null;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AddressGroup {
+  id: number;
+  name: string;
+  position: number;
+  addressCount?: number;
+  createdAt: string;
+}
+
+export interface AddressesResult {
+  addresses: SavedAddress[];
+  count: number;
+}

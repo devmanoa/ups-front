@@ -39,6 +39,25 @@ facturation configurée. Elle est visible dans le navigateur — **restreignez-l
 domaine** (HTTP referrers) dans la console Google Cloud. Sans clé, les champs restent
 en saisie manuelle et la liste des points relais s'affiche sans carte : rien ne casse.
 
+### Carnet d'adresses
+
+Référentiel partagé par toute l'équipe : une adresse enregistrée par une personne
+est aussitôt disponible pour les autres. Les groupes (« antennes », « partenaires »…)
+servent à classer ; ils sont facultatifs.
+
+Le sélecteur « Charger depuis le carnet » apparaît sur toutes les pages de saisie
+d'adresse — Étiquettes, Tarifs, Délais, Enlèvement, et chaque ligne de l'envoi groupé.
+Il **remplit** les champs sans les verrouiller : la correction manuelle reste possible,
+comme avec l'autocomplétion Google.
+
+| Comportement | Détail |
+|---|---|
+| Adresse par défaut | Pré-chargée à l'ouverture de la page Étiquettes |
+| Tri | Défaut d'abord, puis les plus utilisées |
+| Après un envoi réussi | Bouton « Enregistrer dans le carnet », nom pré-rempli |
+| Import CSV | `nom;destinataire;adresse;ville;code_postal;pays;telephone;groupe` — les groupes absents sont créés |
+| Carnet vide ou base absente | Le sélecteur disparaît : les pages restent utilisables |
+
 ### Carte des points relais
 
 Les résultats sont affichés sur une carte Google avec des marqueurs numérotés,
@@ -62,6 +81,7 @@ les modifier ne demande pas de reconstruire l'image.
 | Points relais | `/locator` | Carte Google des UPS Access Points + liste synchronisée, horaires, ID copiable |
 | Coûts à l'import | `/landed-cost` | Droits de douane, taxes et frais pour l'international |
 | Documents douaniers | `/paperless` | Téléversement de factures commerciales dématérialisées |
+| Carnet d'adresses | `/addresses` | Adresses réutilisables partagées, groupes, import CSV |
 
 > Enlèvement, Coûts à l'import et Documents douaniers nécessitent `UPS_ACCOUNT_NUMBER`
 > côté backend. Chaque API doit aussi être souscrite pour votre application sur

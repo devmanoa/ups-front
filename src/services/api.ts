@@ -25,6 +25,9 @@ import type {
   AnomaliesResult,
   BulkEntry,
   BulkResult,
+  SavedAddress,
+  AddressGroup,
+  AddressesResult,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -44,7 +47,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
 }
 
@@ -172,6 +175,28 @@ export interface ShipmentsQuery {
   offset?: number;
 }
 
+
+export interface AddressPayload {
+  label: string;
+  groupId?: number | null;
+  name: string;
+  attentionName?: string;
+  phone?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state?: string;
+  postalCode: string;
+  country: string;
+  residential?: boolean;
+  isDefault?: boolean;
+}
+
+export interface AddressesQuery {
+  search?: string;
+  groupId?: string | number;
+  includeArchived?: boolean;
+}
 export const api = {
   health: () => request<HealthResult>('/health'),
   testAuth: () => request<unknown>('/api/auth/test'),
@@ -230,6 +255,34 @@ export const api = {
 
   createBulkShipments: (payload: { shipments: BulkEntry[]; labelFormat?: string }) =>
     request<BulkResult>('/api/shipping/bulk', { method: 'POST', body: payload }),
+
+  // Carnet d'adresses partagé : mêmes entrées pour tous les utilisateurs.
+  listAddresses: (params: AddressesQuery = {}) => {
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null && value !== '') qs.set(key, String(value));
+    }
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<AddressesResult>(`/api/addresses${suffix}`);
+  },
+  createAddress: (payload: AddressPayload) =>
+    request<SavedAddress>('/api/addresses', { method: 'POST', body: payload }),
+  updateAddress: (id: number, payload: Partial<AddressPayload>) =>
+    request<SavedAddress>(`/api/addresses/${id}`, { method: 'PUT', body: payload }),
+  archiveAddress: (id: number, hard = false) =>
+    request<SavedAddress>(`/api/addresses/${id}${hard ? '?hard=true' : ''}`, { method: 'DELETE' }),
+  restoreAddress: (id: number) =>
+    request<SavedAddress>(`/api/addresses/${id}/restore`, { method: 'POST', body: {} }),
+  markAddressUsed: (id: number) =>
+    request<SavedAddress>(`/api/addresses/${id}/use`, { method: 'POST', body: {} }),
+
+  listAddressGroups: () => request<AddressGroup[]>('/api/addresses/groups'),
+  createAddressGroup: (name: string) =>
+    request<AddressGroup>('/api/addresses/groups', { method: 'POST', body: { name } }),
+  updateAddressGroup: (id: number, patch: { name?: string; position?: number }) =>
+    request<AddressGroup>(`/api/addresses/groups/${id}`, { method: 'PUT', body: patch }),
+  deleteAddressGroup: (id: number) =>
+    request<AddressGroup>(`/api/addresses/groups/${id}`, { method: 'DELETE' }),
 };
 
 export { API_URL };

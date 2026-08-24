@@ -16,6 +16,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   HelpCircle,
+  BookUser,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -69,6 +70,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   {
     label: 'Outils',
     items: [
+      { label: "Carnet d'adresses", icon: BookUser, to: '/addresses' },
       { label: 'Points relais', icon: MapPin, to: '/locator' },
       { label: 'Documents douaniers', icon: FileText, to: '/paperless' },
     ],
