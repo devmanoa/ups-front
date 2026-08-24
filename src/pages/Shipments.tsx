@@ -29,7 +29,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 import { ButtonLink } from '../components/ui/ButtonLink';
-import { money, downloadBase64, printBase64, formatDate } from '../utils/format';
+import { money, downloadBase64, printBase64, formatDate, shipmentKey } from '../utils/format';
 import { ShipmentStatsPanel } from '../components/ShipmentStatsPanel';
 
 const PAGE_SIZE = 25;
@@ -391,7 +391,7 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
             </Badge>
             {shipment.trackingNumber ? (
               <Link
-                to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                to={`/shipments/${encodeURIComponent(shipmentKey(shipment))}`}
                 className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
               >
                 {shipment.trackingNumber}
@@ -445,7 +445,7 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
 
           {(shipment.commentCount ?? 0) > 0 && (
             <Link
-              to={`/shipments/${encodeURIComponent(shipment.trackingNumber ?? '')}`}
+              to={`/shipments/${encodeURIComponent(shipmentKey(shipment))}`}
               className="mt-1 inline-flex items-center gap-1 text-[12px] text-[--k-primary] hover:underline"
             >
               <MessageSquare className="h-3 w-3" />
@@ -463,7 +463,7 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
           <div className="flex flex-wrap justify-end gap-1.5">
             {shipment.trackingNumber && (
               <ButtonLink
-                to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                to={`/shipments/${encodeURIComponent(shipmentKey(shipment))}`}
                 title="Détail, journal et commentaires"
               >
                 <FileText className="h-3.5 w-3.5" />

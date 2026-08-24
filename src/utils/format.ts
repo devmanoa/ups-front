@@ -182,3 +182,29 @@ export function downloadBase64(base64: string, mime: string, filename: string): 
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Vrai pour un numéro de suivi factice.
+ *
+ * L'environnement CIE d'UPS renvoie 1ZXXXXXXXXXXXXXXXX, identique pour tous
+ * les colis et toutes les expéditions : un tel numéro n'identifie rien.
+ */
+export function isPlaceholderTracking(trackingNumber: string | null | undefined): boolean {
+  return /X{6,}/i.test(String(trackingNumber ?? ''));
+}
+
+/**
+ * Identifiant à utiliser dans l'URL du détail d'un envoi.
+ *
+ * Le numéro de suivi si c'est un vrai, l'identifiant d'expédition sinon :
+ * en CIE, tous les envois partagent le même numéro et le lien mènerait
+ * toujours au même détail.
+ */
+export function shipmentKey(shipment: {
+  trackingNumber?: string | null;
+  shipmentId?: string | null;
+}): string {
+  const tracking = shipment.trackingNumber;
+  if (tracking && !isPlaceholderTracking(tracking)) return tracking;
+  return shipment.shipmentId || tracking || '';
+}

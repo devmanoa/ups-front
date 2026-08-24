@@ -27,7 +27,7 @@ import Button from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { AddressMap } from '../components/AddressMap';
 import { cn } from '../components/ui/cn';
-import { money, formatDate, downloadBase64, printBase64 } from '../utils/format';
+import { money, formatDate, downloadBase64, printBase64, shipmentKey, isPlaceholderTracking } from '../utils/format';
 import { actionMeta } from '../utils/actionMeta';
 
 const STATUS_META: Record<
@@ -279,14 +279,18 @@ export default function ShipmentDetail() {
                         <Boxes className="h-4 w-4 shrink-0 text-[--k-muted]" />
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            {/* Le colis affiché n'est pas un lien vers lui-même. */}
-                            {current || !pkg.trackingNumber ? (
+                            {/* Pas de lien vers le colis affiché, ni sur un
+                                numéro factice : en CIE les colis frères
+                                partagent le même et mèneraient tous ici. */}
+                            {current ||
+                            !pkg.trackingNumber ||
+                            isPlaceholderTracking(pkg.trackingNumber) ? (
                               <span className="font-mono text-[13px] font-medium text-[--k-text]">
                                 {pkg.trackingNumber ?? '—'}
                               </span>
                             ) : (
                               <Link
-                                to={`/shipments/${encodeURIComponent(pkg.trackingNumber)}`}
+                                to={`/shipments/${encodeURIComponent(shipmentKey(pkg))}`}
                                 className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
                               >
                                 {pkg.trackingNumber}

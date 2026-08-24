@@ -20,7 +20,7 @@ import { Alert } from '../components/ui/Alert';
 import { EmptyState } from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
 import { ButtonLink } from '../components/ui/ButtonLink';
-import { formatDate } from '../utils/format';
+import { formatDate, shipmentKey } from '../utils/format';
 
 const META: Record<
   AnomalyType,
@@ -180,7 +180,7 @@ function AnomalyRow({ shipment }: { shipment: StoredShipment }) {
             <div className="flex flex-wrap items-center gap-2">
               {shipment.trackingNumber ? (
                 <Link
-                  to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                  to={`/shipments/${encodeURIComponent(shipmentKey(shipment))}`}
                   className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
                 >
                   {shipment.trackingNumber}
@@ -224,7 +224,7 @@ function AnomalyRow({ shipment }: { shipment: StoredShipment }) {
         {shipment.trackingNumber && (
           <>
             <ButtonLink
-              to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+              to={`/shipments/${encodeURIComponent(shipmentKey(shipment))}`}
               variant="secondary"
               title="Détail, journal et commentaires"
             >

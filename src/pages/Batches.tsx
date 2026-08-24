@@ -20,7 +20,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Field } from '../components/ui/Field';
 import Button from '../components/ui/Button';
-import { formatDate, money } from '../utils/format';
+import { formatDate, money, shipmentKey } from '../utils/format';
 
 const PAGE_SIZE = 50;
 
@@ -338,7 +338,7 @@ export function BatchDetailPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     {shipment.trackingNumber ? (
                       <Link
-                        to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                        to={`/shipments/${encodeURIComponent(shipmentKey(shipment))}`}
                         className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
                       >
                         {shipment.trackingNumber}
