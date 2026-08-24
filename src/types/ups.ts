@@ -273,6 +273,8 @@ export interface ShipmentDetail {
   creator: (ShipmentActor & { at: string }) | null;
   activity: ActivityEntry[];
   comments: ShipmentComment[];
+  /** Tous les colis de l'expédition : une ligne par colis en base. */
+  packages: StoredShipment[];
 }
 
 export type AnomalyType = 'delayed' | 'exception' | 'stalled' | 'never_picked_up';

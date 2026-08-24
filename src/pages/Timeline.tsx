@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { History, User, ChevronDown } from 'lucide-react';
+import { History, ChevronDown } from 'lucide-react';
 import { api, type ActivityQuery } from '../services/api';
 import type { ActivityEntry } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -10,6 +10,7 @@ import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
+import { Avatar } from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { cn } from '../components/ui/cn';
 import { actionMeta } from '../utils/actionMeta';
@@ -268,8 +269,8 @@ function TimelineRow({ entry, last }: { entry: ActivityEntry; last: boolean }) {
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[--k-muted]">
-          <span className="inline-flex items-center gap-1">
-            <User className="h-3 w-3" />
+          <span className="inline-flex items-center gap-1.5">
+            <Avatar name={entry.actor.name} seed={entry.actor.id} size="sm" />
             {entry.actor.name}
           </span>
           <span>{formatTime(entry.occurredAt)}</span>

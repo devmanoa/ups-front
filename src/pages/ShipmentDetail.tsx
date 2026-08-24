@@ -8,14 +8,13 @@ import {
   CheckCircle2,
   AlertTriangle,
   Ban,
-  User,
-  MessageSquare,
   Printer,
   Download,
   ExternalLink,
   Trash2,
   Send,
   History,
+  Boxes,
 } from 'lucide-react';
 import { api } from '../services/api';
 import keycloak from '../config/keycloak';
@@ -25,6 +24,8 @@ import { Card, CardTitle } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
+import { Avatar } from '../components/ui/Avatar';
+import { AddressMap } from '../components/AddressMap';
 import { cn } from '../components/ui/cn';
 import { money, formatDate, downloadBase64, printBase64 } from '../utils/format';
 import { actionMeta } from '../utils/actionMeta';
@@ -122,7 +123,7 @@ export default function ShipmentDetail() {
     );
   }
 
-  const { shipment, creator, activity, comments } = detail.data!;
+  const { shipment, creator, activity, comments, packages } = detail.data!;
   const meta = STATUS_META[shipment.status] ?? STATUS_META.created;
   const StatusIcon = meta.icon;
   // `sub` est l'identifiant Keycloak, celui que le backend compare pour
@@ -215,15 +216,20 @@ export default function ShipmentDetail() {
             <dl className="mt-4 grid gap-x-6 gap-y-3 border-t border-[--k-border] pt-4 sm:grid-cols-2">
               <Detail label="Destinataire" value={recipient.join(', ') || '—'} />
               <Detail label="Créé le" value={formatDate(shipment.createdAt)} />
-              <Detail
-                label="Créé par"
-                value={creator?.name ?? 'Utilisateur inconnu'}
-                hint={
-                  creator
-                    ? undefined
-                    : 'L’auteur n’est enregistré que depuis l’activation de Keycloak.'
-                }
-              />
+              <div className="min-w-0">
+                <dt className="text-[12px] font-medium text-[--k-muted]">Créé par</dt>
+                <dd className="mt-1 flex items-center gap-2">
+                  <Avatar name={creator?.name} seed={creator?.id} size="sm" />
+                  <span className="truncate text-[13px] text-[--k-text]">
+                    {creator?.name ?? 'Utilisateur inconnu'}
+                  </span>
+                </dd>
+                {!creator && (
+                  <p className="mt-0.5 text-[11px] text-[--k-muted]">
+                    L’auteur n’est enregistré que depuis l’activation de Keycloak.
+                  </p>
+                )}
+              </div>
               <Detail label="Poids facturé" value={shipment.billingWeight ?? '—'} />
               {shipment.reference && <Detail label="Référence" value={shipment.reference} />}
               {shipment.description && <Detail label="Description" value={shipment.description} />}
@@ -251,6 +257,79 @@ export default function ShipmentDetail() {
                 </a>
               </div>
             )}
+          </Card>
+
+          {packages.length > 0 && (
+            <Card>
+              <CardTitle
+                title="Colis"
+                hint={`${packages.length} colis dans l’expédition`}
+              />
+              <div className="divide-y divide-[--k-border]">
+                {packages.map((pkg, i) => {
+                  const current = pkg.trackingNumber === shipment.trackingNumber;
+                  const pkgMeta = STATUS_META[pkg.status] ?? STATUS_META.created;
+
+                  return (
+                    <div
+                      key={pkg.trackingNumber ?? i}
+                      className="flex flex-wrap items-center justify-between gap-3 py-2.5"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Boxes className="h-4 w-4 shrink-0 text-[--k-muted]" />
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Le colis affiché n'est pas un lien vers lui-même. */}
+                            {current || !pkg.trackingNumber ? (
+                              <span className="font-mono text-[13px] font-medium text-[--k-text]">
+                                {pkg.trackingNumber ?? '—'}
+                              </span>
+                            ) : (
+                              <Link
+                                to={`/shipments/${encodeURIComponent(pkg.trackingNumber)}`}
+                                className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
+                              >
+                                {pkg.trackingNumber}
+                              </Link>
+                            )}
+                            {current && <Badge tone="primary">Affiché</Badge>}
+                          </div>
+                          <p className="mt-0.5 text-[12px] text-[--k-muted]">
+                            Colis {i + 1}
+                            {pkg.billingWeight && ` · ${pkg.billingWeight}`}
+                            {pkg.reference && ` · ${pkg.reference}`}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge tone={pkgMeta.tone}>{pkgMeta.label}</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {packages.length > 1 && (
+                <p className="mt-3 border-t border-[--k-border] pt-3 text-[12px] text-[--k-muted]">
+                  Le montant affiché plus haut couvre l’expédition entière, pas un colis isolé.
+                </p>
+              )}
+            </Card>
+          )}
+
+          <Card>
+            <CardTitle
+              title="Destination"
+              hint={[shipment.recipient.postalCode, shipment.recipient.city]
+                .filter(Boolean)
+                .join(' ')}
+            />
+            <AddressMap
+              addressLine1={shipment.recipient.address}
+              city={shipment.recipient.city}
+              postalCode={shipment.recipient.postalCode}
+              country={shipment.recipient.country}
+              label={shipment.recipient.name ?? shipment.recipient.company}
+              height="300px"
+            />
           </Card>
 
           <Card>
@@ -303,19 +382,16 @@ export default function ShipmentDetail() {
               <ul className="mt-4 divide-y divide-[--k-border]">
                 {comments.map((comment) => (
                   <li key={comment.id} className="flex items-start gap-3 py-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[--k-primary-2] text-indigo-700">
-                      <MessageSquare className="h-4 w-4" />
-                    </span>
+                    <Avatar name={comment.actor?.name} seed={comment.actor?.id} />
                     <div className="min-w-0 flex-1">
-                      <p className="whitespace-pre-wrap text-[13px] text-[--k-text]">
-                        {comment.body}
-                      </p>
-                      <p className="mt-1 flex flex-wrap items-center gap-x-3 text-[12px] text-[--k-muted]">
-                        <span className="inline-flex items-center gap-1">
-                          <User className="h-3 w-3" />
+                      <p className="mb-1 flex flex-wrap items-center gap-x-2 text-[12px]">
+                        <span className="font-medium text-[--k-text]">
                           {comment.actor?.name ?? 'Utilisateur inconnu'}
                         </span>
-                        <span>{formatDate(comment.createdAt)}</span>
+                        <span className="text-[--k-muted]">{formatDate(comment.createdAt)}</span>
+                      </p>
+                      <p className="whitespace-pre-wrap text-[13px] text-[--k-text]">
+                        {comment.body}
                       </p>
                     </div>
                     {/* Un commentaire n'est supprimable que par son auteur : le
@@ -367,11 +443,10 @@ export default function ShipmentDetail() {
                       </span>
                       <div className="min-w-0 flex-1 pt-0.5">
                         <p className="text-[13px] text-[--k-text]">{entry.summary}</p>
-                        <p className="mt-1 flex flex-wrap items-center gap-x-3 text-[12px] text-[--k-muted]">
-                          <span className="inline-flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {entry.actor.name}
-                          </span>
+                        <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-[--k-muted]">
+                          <Avatar name={entry.actor.name} seed={entry.actor.id} size="sm" />
+                          <span>{entry.actor.name}</span>
+                          <span>·</span>
                           <span>{formatDate(entry.occurredAt)}</span>
                         </p>
                       </div>
