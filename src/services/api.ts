@@ -30,6 +30,8 @@ import type {
   AddressesResult,
   ActivityResult,
   ActivityActor,
+  ShipmentDetail,
+  ShipmentComment,
   BatchesResult,
   BatchDetail,
   PackageType,
@@ -296,6 +298,22 @@ export const api = {
     request<StatsResult>(`/api/shipments/stats${toQueryString(params)}`),
   getShipmentLabel: (trackingNumber: string) =>
     request<StoredLabel>(`/api/shipments/${encodeURIComponent(trackingNumber)}/label`),
+
+  /** Détail complet : envoi, auteur, journal et commentaires en un appel. */
+  getShipmentDetail: (trackingNumber: string) =>
+    request<ShipmentDetail>(`/api/shipments/${encodeURIComponent(trackingNumber)}`),
+
+  addShipmentComment: (trackingNumber: string, body: string) =>
+    request<ShipmentComment>(
+      `/api/shipments/${encodeURIComponent(trackingNumber)}/comments`,
+      { method: 'POST', body: { body } },
+    ),
+
+  deleteShipmentComment: (trackingNumber: string, id: number) =>
+    request<{ id: number }>(
+      `/api/shipments/${encodeURIComponent(trackingNumber)}/comments/${id}`,
+      { method: 'DELETE' },
+    ),
   refreshShipmentStatus: (trackingNumbers: string[]) =>
     request<RefreshStatusResult>('/api/shipments/refresh-status', {
       method: 'POST',

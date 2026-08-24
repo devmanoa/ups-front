@@ -1,19 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import {
-  History,
-  Tag,
-  XCircle,
-  Layers,
-  BookUser,
-  FolderPlus,
-  Truck,
-  RadioTower,
-  User,
-  ChevronDown,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { History, User, ChevronDown } from 'lucide-react';
 import { api, type ActivityQuery } from '../services/api';
 import type { ActivityEntry } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -24,31 +12,10 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 import { cn } from '../components/ui/cn';
+import { actionMeta } from '../utils/actionMeta';
 
 const PAGE_SIZE = 50;
 
-/**
- * Présentation par type d'action. La clé est le préfixe : `address.create`
- * et `address.update` partagent la même icône, seule la teinte varie.
- */
-const ACTION_META: Record<string, { icon: LucideIcon; label: string; tone: string }> = {
-  'shipment.create': { icon: Tag, label: 'Étiquette créée', tone: 'text-indigo-600 bg-indigo-50' },
-  'shipment.void': { icon: XCircle, label: 'Expédition annulée', tone: 'text-red-600 bg-red-50' },
-  'shipment.sync': { icon: RadioTower, label: 'Statuts synchronisés', tone: 'text-slate-600 bg-slate-100' },
-  'bulk.create': { icon: Layers, label: 'Envoi groupé', tone: 'text-violet-600 bg-violet-50' },
-  'address.create': { icon: BookUser, label: 'Adresse ajoutée', tone: 'text-green-600 bg-green-50' },
-  'address.update': { icon: BookUser, label: 'Adresse modifiée', tone: 'text-amber-600 bg-amber-50' },
-  'address.archive': { icon: BookUser, label: 'Adresse archivée', tone: 'text-slate-600 bg-slate-100' },
-  'address.restore': { icon: BookUser, label: 'Adresse restaurée', tone: 'text-green-600 bg-green-50' },
-  'address.delete': { icon: BookUser, label: 'Adresse supprimée', tone: 'text-red-600 bg-red-50' },
-  'group.create': { icon: FolderPlus, label: 'Groupe créé', tone: 'text-green-600 bg-green-50' },
-  'group.update': { icon: FolderPlus, label: 'Groupe modifié', tone: 'text-amber-600 bg-amber-50' },
-  'group.delete': { icon: FolderPlus, label: 'Groupe supprimé', tone: 'text-red-600 bg-red-50' },
-  'pickup.create': { icon: Truck, label: 'Enlèvement planifié', tone: 'text-indigo-600 bg-indigo-50' },
-  'pickup.cancel': { icon: Truck, label: 'Enlèvement annulé', tone: 'text-red-600 bg-red-50' },
-};
-
-const FALLBACK_META = { icon: History, label: 'Action', tone: 'text-slate-600 bg-slate-100' };
 
 /** Familles proposées au filtre : le backend accepte le préfixe seul. */
 const ACTION_FAMILIES = [
@@ -276,7 +243,7 @@ export default function Timeline() {
 
 function TimelineRow({ entry, last }: { entry: ActivityEntry; last: boolean }) {
   const [open, setOpen] = useState(false);
-  const meta = ACTION_META[entry.action] ?? FALLBACK_META;
+  const meta = actionMeta(entry.action);
   const Icon = meta.icon;
   const hasDetails = entry.metadata && Object.keys(entry.metadata).length > 0;
 
@@ -309,7 +276,10 @@ function TimelineRow({ entry, last }: { entry: ActivityEntry; last: boolean }) {
 
           {/* Lien vers l'objet concerné, quand il est consultable. */}
           {entry.entityType === 'shipment' && entry.entityId && (
-            <Link to="/shipments" className="text-[--k-primary] hover:underline">
+            <Link
+              to={`/shipments/${encodeURIComponent(entry.entityId)}`}
+              className="text-[--k-primary] hover:underline"
+            >
               Voir l’envoi
             </Link>
           )}

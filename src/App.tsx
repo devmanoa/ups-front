@@ -8,6 +8,7 @@ import Tracking from './pages/Tracking';
 import Rating from './pages/Rating';
 import Shipping from './pages/Shipping';
 import Shipments from './pages/Shipments';
+import ShipmentDetail from './pages/ShipmentDetail';
 import Anomalies from './pages/Anomalies';
 import BulkShipping from './pages/BulkShipping';
 import Locator from './pages/Locator';
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="shipping" element={<Shipping />} />
                 <Route path="shipping/bulk" element={<BulkShipping />} />
                 <Route path="shipments" element={<Shipments />} />
+                <Route path="shipments/:trackingNumber" element={<ShipmentDetail />} />
                 <Route path="anomalies" element={<Anomalies />} />
                 <Route path="pickup" element={<Pickup />} />
                 <Route path="locator" element={<Locator />} />

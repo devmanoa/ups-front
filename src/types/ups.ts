@@ -247,6 +247,32 @@ export interface StoredShipment {
   anomalies?: Anomaly[];
   hasAnomaly?: boolean;
   primaryAnomaly?: Anomaly | null;
+  /** Auteur de la création, lu dans le journal : absent avant Keycloak. */
+  creator?: ShipmentActor | null;
+  commentCount?: number;
+}
+
+/** Auteur d'une action ou d'un commentaire, recopié depuis Keycloak. */
+export interface ShipmentActor {
+  id: string | null;
+  name: string;
+  email: string | null;
+}
+
+export interface ShipmentComment {
+  id: number;
+  trackingNumber: string;
+  body: string;
+  createdAt: string;
+  actor: ShipmentActor | null;
+}
+
+/** Réponse de GET /api/shipments/:trackingNumber — tout ce qu'affiche la page dédiée. */
+export interface ShipmentDetail {
+  shipment: StoredShipment;
+  creator: (ShipmentActor & { at: string }) | null;
+  activity: ActivityEntry[];
+  comments: ShipmentComment[];
 }
 
 export type AnomalyType = 'delayed' | 'exception' | 'stalled' | 'never_picked_up';

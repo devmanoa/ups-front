@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   Ban,
   Clock,
+  MessageSquare,
+  FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api, type ShipmentsQuery } from '../services/api';
@@ -386,9 +388,18 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
               <StatusIcon className="h-3 w-3" />
               {meta.label}
             </Badge>
-            <span className="font-mono text-[13px] font-medium text-[--k-text]">
-              {shipment.trackingNumber || shipment.shipmentId}
-            </span>
+            {shipment.trackingNumber ? (
+              <Link
+                to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
+              >
+                {shipment.trackingNumber}
+              </Link>
+            ) : (
+              <span className="font-mono text-[13px] font-medium text-[--k-text]">
+                {shipment.shipmentId}
+              </span>
+            )}
             {shipment.primaryAnomaly && (
               <Badge tone="warning">
                 <AlertTriangle className="h-3 w-3" />
@@ -419,11 +430,24 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
               shipment.serviceName,
               shipment.billingWeight,
               `Créé le ${formatDate(shipment.createdAt)}`,
+              // L'auteur n'existe que depuis l'activation de Keycloak : on
+              // n'affiche rien plutôt qu'un « Utilisateur inconnu » répété.
+              shipment.creator ? `par ${shipment.creator.name}` : null,
               shipment.statusDescription,
             ]
               .filter(Boolean)
               .join(' · ')}
           </p>
+
+          {(shipment.commentCount ?? 0) > 0 && (
+            <Link
+              to={`/shipments/${encodeURIComponent(shipment.trackingNumber ?? '')}`}
+              className="mt-1 inline-flex items-center gap-1 text-[12px] text-[--k-primary] hover:underline"
+            >
+              <MessageSquare className="h-3 w-3" />
+              {shipment.commentCount} commentaire{(shipment.commentCount ?? 0) > 1 ? 's' : ''}
+            </Link>
+          )}
         </div>
 
         <div className="flex flex-col items-end gap-2">
@@ -433,6 +457,14 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
             </span>
           )}
           <div className="flex flex-wrap justify-end gap-1.5">
+            {shipment.trackingNumber && (
+              <Link to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}>
+                <Button type="button" variant="ghost" size="sm" title="Détail, journal et commentaires">
+                  <FileText className="h-3.5 w-3.5" />
+                  Détail
+                </Button>
+              </Link>
+            )}
             {shipment.trackingNumber && (
               <Link to={`/tracking?number=${encodeURIComponent(shipment.trackingNumber)}`}>
                 <Button type="button" variant="ghost" size="sm">
