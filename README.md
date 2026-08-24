@@ -164,6 +164,19 @@ synchronisée avec la liste : survoler une ligne met son marqueur en avant et ou
 son infobulle, cliquer un marqueur met la ligne en évidence. L'infobulle reprend
 l'adresse, le téléphone, la distance, l'ID du point et les horaires.
 
+**L'adresse recherchée apparaît en repère rouge**, distincte des épingles indigo
+numérotées : un disque plutôt qu'une épingle, pour qu'on situe d'un coup d'œil
+« où je suis » par rapport aux points relais. Une légende le rappelle en bas de
+carte, et le repère est inclus dans le cadrage — une recherche à large rayon ne
+peut pas le laisser hors écran.
+
+Ses coordonnées viennent de l'autocomplétion quand une suggestion a été choisie ;
+sinon, une ville ou un code postal saisis à la main sont géocodés au moment de la
+recherche. Une modification manuelle d'un champ périme les coordonnées de la
+suggestion, pour que le repère ne reste pas à l'ancien endroit. Si la
+localisation échoue, seul le repère manque : les points relais s'affichent
+normalement.
+
 En production, ces variables sont injectées **au démarrage du conteneur** :
 les modifier ne demande pas de reconstruire l'image.
 

@@ -12,6 +12,7 @@ import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
 import { AccessPointsMap } from '../components/AccessPointsMap';
+import { geocodeAddress } from '../utils/googleMaps';
 
 export default function Locator() {
   const [address, setAddress] = useState<Address>({ country: 'FR' });
@@ -23,6 +24,15 @@ export default function Locator() {
   /** Distingue un clic sur la carte d'un survol dans la liste. */
   const [scrollToActive, setScrollToActive] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Position de l'adresse recherchée, affichée en repère sur la carte.
+   * Alimentée par l'autocomplétion quand elle est utilisée, sinon par un
+   * géocodage au moment de la recherche.
+   */
+  const [origin, setOrigin] = useState<{ lat: number; lng: number; label?: string } | null>(null);
+  /** Coordonnées issues d'une suggestion : évitent un géocodage inutile. */
+  const pickedRef = useRef<{ lat: number; lng: number } | null>(null);
 
   /**
    * Amène la ligne active dans la vue lorsqu'elle a été choisie depuis la
@@ -49,14 +59,53 @@ export default function Locator() {
     onMutate: () => setActiveIndex(null),
   });
 
-  const set = (patch: Partial<Address>) => setAddress((prev) => ({ ...prev, ...patch }));
+  /**
+   * Toute modification manuelle périme les coordonnées de la suggestion :
+   * corriger la ville après avoir choisi une adresse ne doit pas laisser le
+   * repère à l'ancien endroit.
+   */
+  const set = (patch: Partial<Address>) => {
+    pickedRef.current = null;
+    setAddress((prev) => ({ ...prev, ...patch }));
+  };
 
   const blockedReason =
     !address.postalCode && !address.city ? 'Renseignez une ville ou un code postal' : null;
 
+  /** Résumé lisible de l'adresse, pour l'infobulle du repère. */
+  const originLabel = () =>
+    [address.addressLine1, address.postalCode, address.city].filter(Boolean).join(', ') ||
+    undefined;
+
+  /**
+   * Situe l'adresse sur la carte. Les coordonnées d'une suggestion sont
+   * réutilisées telles quelles ; sinon un géocodage est tenté.
+   *
+   * Volontairement détaché de la recherche : un échec de localisation ne
+   * doit pas empêcher d'afficher les points relais.
+   */
+  const locateOrigin = () => {
+    const picked = pickedRef.current;
+    if (picked) {
+      setOrigin({ ...picked, label: originLabel() });
+      return;
+    }
+
+    setOrigin(null);
+    geocodeAddress({
+      addressLine1: address.addressLine1,
+      city: address.city,
+      postalCode: address.postalCode,
+      country: address.country,
+    }).then((found) => {
+      if (found) setOrigin({ ...found, label: originLabel() });
+    });
+  };
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (blockedReason) return;
+    locateOrigin();
     mutation.mutate({
       address,
       radius: Number(radius) || 25,
@@ -83,15 +132,22 @@ export default function Locator() {
                   placeholder="Commencez à taper l'adresse…"
                   value={address.addressLine1 ?? ''}
                   onChange={(v) => set({ addressLine1: v })}
-                  onSelect={(p) =>
+                  onSelect={(p) => {
                     set({
                       addressLine1: p.addressLine1,
                       city: p.city,
                       state: p.state,
                       postalCode: p.postalCode,
                       country: p.country,
-                    })
-                  }
+                    });
+
+                    // Posé APRÈS set(), qui périme volontairement les
+                    // coordonnées à chaque modification de champ.
+                    pickedRef.current =
+                      p.latitude != null && p.longitude != null
+                        ? { lat: p.latitude, lng: p.longitude }
+                        : null;
+                  }}
                 />
               </div>
               <Field
@@ -161,6 +217,7 @@ export default function Locator() {
                   locations={mutation.data.locations}
                   activeIndex={activeIndex}
                   onActivate={activateFromMap}
+                  origin={origin}
                 />
 
                 <div className="flex min-h-0 flex-col xl:h-[600px]">

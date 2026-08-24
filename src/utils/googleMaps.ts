@@ -92,3 +92,47 @@ export function parsePlace(place: google.maps.places.PlaceResult): ParsedAddress
     longitude: place.geometry?.location?.lng(),
   };
 }
+
+/**
+ * Localise une adresse saisie à la main (ville, code postal), afin de la
+ * situer sur la carte des points relais.
+ *
+ * L'autocomplétion fournit déjà des coordonnées ; ce repli sert quand
+ * l'utilisateur tape directement une ville sans passer par une suggestion.
+ *
+ * Retourne null plutôt que de lever : ne pas savoir situer l'adresse n'est
+ * pas une erreur, la recherche de points relais reste valable.
+ */
+export async function geocodeAddress(parts: {
+  addressLine1?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+}): Promise<{ lat: number; lng: number } | null> {
+  if (!isGoogleMapsConfigured()) return null;
+
+  const address = [parts.addressLine1, parts.postalCode, parts.city]
+    .map((v) => (v ?? '').trim())
+    .filter(Boolean)
+    .join(', ');
+
+  if (!address) return null;
+
+  try {
+    await loadGoogleMaps();
+
+    const geocoder = new google.maps.Geocoder();
+    const { results } = await geocoder.geocode({
+      address,
+      // Restreint au pays saisi : « Paris » sans indication pourrait
+      // renvoyer Paris (Texas).
+      ...(parts.country ? { componentRestrictions: { country: parts.country } } : {}),
+    });
+
+    const location = results?.[0]?.geometry?.location;
+    return location ? { lat: location.lat(), lng: location.lng() } : null;
+  } catch {
+    // Quota dépassé, adresse introuvable, réseau : sans conséquence ici.
+    return null;
+  }
+}

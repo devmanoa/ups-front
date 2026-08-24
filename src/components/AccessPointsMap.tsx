@@ -8,6 +8,12 @@ interface AccessPointsMapProps {
   /** Index survolé/sélectionné dans la liste — met le marqueur en avant. */
   activeIndex: number | null;
   onActivate: (index: number | null) => void;
+  /**
+   * Point de la recherche, affiché d'une couleur distincte pour se situer
+   * par rapport aux points relais. Absent si l'adresse n'a pas pu être
+   * localisée.
+   */
+  origin?: { lat: number; lng: number; label?: string } | null;
 }
 
 /** Échappe le HTML : le contenu des infobulles vient de l'API UPS. */
@@ -172,10 +178,35 @@ function pinIcon(index: number, active: boolean): google.maps.Symbol | google.ma
   } as google.maps.Icon;
 }
 
-export function AccessPointsMap({ locations, activeIndex, onActivate }: AccessPointsMapProps) {
+/**
+ * Marqueur du point de recherche : un disque, volontairement d'une autre
+ * forme et d'une autre couleur que les épingles numérotées, pour qu'on
+ * distingue « où je suis » de « où sont les points relais ».
+ */
+function originIcon(): google.maps.Icon {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">
+      <circle cx="13" cy="13" r="11" fill="#DC2626" fill-opacity="0.18"/>
+      <circle cx="13" cy="13" r="7" fill="#DC2626" stroke="#fff" stroke-width="2.5"/>
+    </svg>`;
+
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new google.maps.Size(26, 26),
+    anchor: new google.maps.Point(13, 13),
+  } as google.maps.Icon;
+}
+
+export function AccessPointsMap({
+  locations,
+  activeIndex,
+  onActivate,
+  origin,
+}: AccessPointsMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const originRef = useRef<google.maps.Marker | null>(null);
   const infoRef = useRef<google.maps.InfoWindow | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
@@ -224,13 +255,45 @@ export function AccessPointsMap({ locations, activeIndex, onActivate }: AccessPo
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
 
+    // Le marqueur d'origine est recréé avec les autres : sa position change
+    // à chaque nouvelle recherche.
+    originRef.current?.setMap(null);
+    originRef.current = null;
+
     const positioned = locations
       .map((loc, index) => ({ loc, index }))
       .filter((e) => e.loc.latitude != null && e.loc.longitude != null);
 
-    if (positioned.length === 0) return;
+    if (positioned.length === 0 && !origin) return;
 
     const bounds = new google.maps.LatLngBounds();
+
+    if (origin) {
+      originRef.current = new google.maps.Marker({
+        position: origin,
+        map,
+        icon: originIcon(),
+        title: origin.label || 'Adresse recherchée',
+        // Au-dessus des épingles : c'est le repère, il ne doit pas être
+        // masqué par un point relais tout proche.
+        zIndex: 2000,
+      });
+
+      originRef.current.addListener('click', () => {
+        infoRef.current?.setContent(
+          `<div style="font-family:'Segoe UI',system-ui,sans-serif;font-size:12px;
+                       color:#1A1D2B;padding:2px 4px">
+             <strong>Adresse recherchée</strong>
+             ${origin.label ? `<div style="color:#5E6A82;margin-top:2px">${esc(origin.label)}</div>` : ''}
+           </div>`,
+        );
+        infoRef.current?.open({ map, anchor: originRef.current! });
+      });
+
+      // Inclus dans le cadrage : sans cela, une recherche à large rayon
+      // pourrait sortir le repère de l'écran.
+      bounds.extend(origin);
+    }
 
     positioned.forEach(({ loc, index }) => {
       const position = { lat: loc.latitude!, lng: loc.longitude! };
@@ -260,7 +323,7 @@ export function AccessPointsMap({ locations, activeIndex, onActivate }: AccessPo
     });
 
     return () => google.maps.event.removeListener(listener);
-  }, [locations, status]);
+  }, [locations, status, origin]);
 
   // Met en avant le marqueur correspondant à l'élément actif de la liste.
   useEffect(() => {
@@ -296,6 +359,16 @@ export function AccessPointsMap({ locations, activeIndex, onActivate }: AccessPo
     <div className="relative overflow-hidden rounded-xl border border-[--k-border]">
       {/* Hauteur alignée sur celle de la liste voisine, pour un bloc homogène. */}
       <div ref={containerRef} className="h-[420px] w-full bg-[--k-surface-2] xl:h-[600px]" />
+
+      {/* Légende : sans elle, le point rouge se confond avec un marqueur
+          d'incident ou un point relais indisponible. */}
+      {status === 'ready' && origin && (
+        <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[--k-text] shadow-md">
+          <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-white bg-red-600 ring-1 ring-red-200" />
+          Adresse recherchée
+        </div>
+      )}
+
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[--k-surface-2] text-[13px] text-[--k-muted]">
           <Loader2 className="h-4 w-4 animate-spin" />
