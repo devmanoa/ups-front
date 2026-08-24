@@ -23,6 +23,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { Modal } from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import { cn } from '../components/ui/cn';
 
@@ -456,220 +457,234 @@ export default function AddressBook() {
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-4">
-          {draft ? (
-            <Card>
-              <CardTitle title={editing ? 'Modifier l’adresse' : 'Nouvelle adresse'} />
-              <form onSubmit={submit} className="space-y-3">
-                <Field
-                  label="Nom dans le carnet"
-                  required
-                  placeholder="Antenne Lyon Part-Dieu"
-                  value={draft.label}
-                  onChange={(e) => set({ label: e.target.value })}
+          <Card>
+            <CardTitle
+              title="Groupes"
+              hint="Classez vos adresses par usage"
+              action={
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowGroupForm((v) => !v)}
+                >
+                  <FolderPlus className="h-4 w-4" />
+                  Nouveau
+                </Button>
+              }
+            />
+
+            {showGroupForm && (
+              <form
+                className="mb-3 flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newGroup.trim()) createGroup.mutate(newGroup.trim());
+                }}
+              >
+                <input
+                  autoFocus
+                  value={newGroup}
+                  onChange={(e) => setNewGroup(e.target.value)}
+                  placeholder="Antennes, Partenaires…"
+                  className="input-field"
                 />
-
-                <SelectField
-                  label="Groupe"
-                  value={draft.groupId ?? ''}
-                  onChange={(e) => set({ groupId: e.target.value ? Number(e.target.value) : null })}
-                >
-                  <option value="">Sans groupe</option>
-                  {(groups.data ?? []).map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </SelectField>
-
-                <div className="border-t border-[--k-border] pt-3">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[--k-muted]">
-                    Adresse
-                  </p>
-                  <div className="space-y-3">
-                    <Field
-                      label="Destinataire"
-                      required
-                      placeholder="Antenne Lyon"
-                      value={draft.name}
-                      onChange={(e) => set({ name: e.target.value })}
-                    />
-                    <Field
-                      label="Contact"
-                      placeholder="Service réception"
-                      value={draft.attentionName ?? ''}
-                      onChange={(e) => set({ attentionName: e.target.value })}
-                    />
-                    <AddressAutocomplete
-                      label="Adresse"
-                      required
-                      placeholder="Commencez à taper l’adresse…"
-                      value={draft.addressLine1}
-                      onChange={(v) => set({ addressLine1: v })}
-                      onSelect={(p) =>
-                        set({
-                          addressLine1: p.addressLine1,
-                          city: p.city,
-                          state: p.state,
-                          postalCode: p.postalCode,
-                          country: p.country,
-                        })
-                      }
-                    />
-                    <Field
-                      label="Complément"
-                      placeholder="Bâtiment, étage…"
-                      value={draft.addressLine2 ?? ''}
-                      onChange={(e) => set({ addressLine2: e.target.value })}
-                    />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field
-                        label="Ville"
-                        required
-                        value={draft.city}
-                        onChange={(e) => set({ city: e.target.value })}
-                      />
-                      <Field
-                        label="Code postal"
-                        required
-                        value={draft.postalCode}
-                        onChange={(e) => set({ postalCode: e.target.value })}
-                      />
-                      <Field
-                        label="État (si applicable)"
-                        maxLength={2}
-                        value={draft.state ?? ''}
-                        onChange={(e) => set({ state: e.target.value.toUpperCase() })}
-                      />
-                      <Field
-                        label="Pays (ISO 2)"
-                        required
-                        maxLength={2}
-                        value={draft.country}
-                        onChange={(e) => set({ country: e.target.value.toUpperCase() })}
-                      />
-                    </div>
-                    <Field
-                      label="Téléphone"
-                      placeholder="0102030405"
-                      value={draft.phone ?? ''}
-                      onChange={(e) => set({ phone: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {saveAddress.isError && (
-                  <Alert type="error">{(saveAddress.error as Error).message}</Alert>
-                )}
-
-                <div className="flex items-center gap-2 border-t border-[--k-border] pt-3">
-                  <Button
-                    type="submit"
-                    isLoading={saveAddress.isPending}
-                    disabled={missing.length > 0}
-                  >
-                    {editing ? 'Enregistrer' : 'Ajouter au carnet'}
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={closeForm}>
-                    Annuler
-                  </Button>
-                </div>
-
-                {missing.length > 0 && (
-                  <p className="text-[12px] text-[--k-muted]">
-                    Champs obligatoires manquants : {missing.join(', ')}
-                  </p>
-                )}
+                <Button type="submit" size="sm" isLoading={createGroup.isPending}>
+                  Créer
+                </Button>
               </form>
-            </Card>
-          ) : (
-            <Card>
-              <CardTitle
-                title="Groupes"
-                hint="Classez vos adresses par usage"
-                action={
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowGroupForm((v) => !v)}
-                  >
-                    <FolderPlus className="h-4 w-4" />
-                    Nouveau
-                  </Button>
-                }
-              />
+            )}
 
-              {showGroupForm && (
-                <form
-                  className="mb-3 flex gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (newGroup.trim()) createGroup.mutate(newGroup.trim());
-                  }}
-                >
-                  <input
-                    autoFocus
-                    value={newGroup}
-                    onChange={(e) => setNewGroup(e.target.value)}
-                    placeholder="Antennes, Partenaires…"
-                    className="input-field"
-                  />
-                  <Button type="submit" size="sm" isLoading={createGroup.isPending}>
-                    Créer
-                  </Button>
-                </form>
-              )}
+            {createGroup.isError && (
+              <Alert type="error" className="mb-3">
+                {(createGroup.error as Error).message}
+              </Alert>
+            )}
 
-              {createGroup.isError && (
-                <Alert type="error" className="mb-3">
-                  {(createGroup.error as Error).message}
-                </Alert>
-              )}
-
-              {(groups.data ?? []).length === 0 ? (
-                <p className="text-[13px] text-[--k-muted]">
-                  Aucun groupe. Les adresses restent utilisables sans groupe.
-                </p>
-              ) : (
-                <ul className="divide-y divide-[--k-border]">
-                  {(groups.data ?? []).map((group) => (
-                    <li key={group.id} className="flex items-center justify-between gap-2 py-2">
-                      <span className="min-w-0">
-                        <span className="block truncate text-[13px] font-medium text-[--k-text]">
-                          {group.name}
-                        </span>
-                        <span className="text-[12px] text-[--k-muted]">
-                          {group.addressCount ?? 0} adresse
-                          {(group.addressCount ?? 0) > 1 ? 's' : ''}
-                        </span>
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        title="Supprimer le groupe (les adresses sont conservées)"
-                        onClick={() => deleteGroup.mutate(group.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {deleteGroup.isError && (
-                <Alert type="error" className="mt-3">
-                  {(deleteGroup.error as Error).message}
-                </Alert>
-              )}
-
-              <p className="mt-3 text-[12px] text-[--k-muted]">
-                Supprimer un groupe conserve ses adresses : elles passent « sans groupe ».
+            {(groups.data ?? []).length === 0 ? (
+              <p className="text-[13px] text-[--k-muted]">
+                Aucun groupe. Les adresses restent utilisables sans groupe.
               </p>
-            </Card>
-          )}
+            ) : (
+              <ul className="divide-y divide-[--k-border]">
+                {(groups.data ?? []).map((group) => (
+                  <li key={group.id} className="flex items-center justify-between gap-2 py-2">
+                    <span className="min-w-0">
+                      <span className="block truncate text-[13px] font-medium text-[--k-text]">
+                        {group.name}
+                      </span>
+                      <span className="text-[12px] text-[--k-muted]">
+                        {group.addressCount ?? 0} adresse
+                        {(group.addressCount ?? 0) > 1 ? 's' : ''}
+                      </span>
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      title="Supprimer le groupe (les adresses sont conservées)"
+                      onClick={() => deleteGroup.mutate(group.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {deleteGroup.isError && (
+              <Alert type="error" className="mt-3">
+                {(deleteGroup.error as Error).message}
+              </Alert>
+            )}
+
+            <p className="mt-3 text-[12px] text-[--k-muted]">
+              Supprimer un groupe conserve ses adresses : elles passent « sans groupe ».
+            </p>
+          </Card>
         </div>
       </div>
+
+      <Modal
+        open={draft !== null}
+        onClose={closeForm}
+        title={editing ? 'Modifier l’adresse' : 'Nouvelle adresse'}
+        hint={editing ? editing.label : 'Réutilisable en un clic sur les pages d’expédition.'}
+        footer={
+          <div className="flex items-center gap-2">
+            <Button
+              type="submit"
+              form="address-form"
+              isLoading={saveAddress.isPending}
+              disabled={missing.length > 0}
+            >
+              {editing ? 'Enregistrer' : 'Ajouter au carnet'}
+            </Button>
+            <Button type="button" variant="ghost" onClick={closeForm}>
+              Annuler
+            </Button>
+            {missing.length > 0 && (
+              <p className="ml-auto text-right text-[12px] text-[--k-muted]">
+                Champs obligatoires manquants : {missing.join(', ')}
+              </p>
+            )}
+          </div>
+        }
+      >
+        {draft && (
+          // `form` sur le bouton d'envoi du pied : le formulaire défile, la
+          // barre d'actions reste fixe, et la touche Entrée continue de
+          // valider comme dans un formulaire ordinaire.
+          <form id="address-form" onSubmit={submit} className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label="Nom dans le carnet"
+                required
+                placeholder="Antenne Lyon Part-Dieu"
+                value={draft.label}
+                onChange={(e) => set({ label: e.target.value })}
+              />
+              <SelectField
+                label="Groupe"
+                value={draft.groupId ?? ''}
+                onChange={(e) => set({ groupId: e.target.value ? Number(e.target.value) : null })}
+              >
+                <option value="">Sans groupe</option>
+                {(groups.data ?? []).map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+
+            <div className="border-t border-[--k-border] pt-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[--k-muted]">
+                Adresse
+              </p>
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="Destinataire"
+                    required
+                    placeholder="Antenne Lyon"
+                    value={draft.name}
+                    onChange={(e) => set({ name: e.target.value })}
+                  />
+                  <Field
+                    label="Contact"
+                    placeholder="Service réception"
+                    value={draft.attentionName ?? ''}
+                    onChange={(e) => set({ attentionName: e.target.value })}
+                  />
+                </div>
+                <AddressAutocomplete
+                  label="Adresse"
+                  required
+                  placeholder="Commencez à taper l’adresse…"
+                  value={draft.addressLine1}
+                  onChange={(v) => set({ addressLine1: v })}
+                  onSelect={(p) =>
+                    set({
+                      addressLine1: p.addressLine1,
+                      city: p.city,
+                      state: p.state,
+                      postalCode: p.postalCode,
+                      country: p.country,
+                    })
+                  }
+                />
+                <Field
+                  label="Complément"
+                  placeholder="Bâtiment, étage…"
+                  value={draft.addressLine2 ?? ''}
+                  onChange={(e) => set({ addressLine2: e.target.value })}
+                />
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <Field
+                    label="Ville"
+                    required
+                    className="sm:col-span-2"
+                    value={draft.city}
+                    onChange={(e) => set({ city: e.target.value })}
+                  />
+                  <Field
+                    label="Code postal"
+                    required
+                    value={draft.postalCode}
+                    onChange={(e) => set({ postalCode: e.target.value })}
+                  />
+                  <Field
+                    label="Pays (ISO 2)"
+                    required
+                    maxLength={2}
+                    value={draft.country}
+                    onChange={(e) => set({ country: e.target.value.toUpperCase() })}
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="État (si applicable)"
+                    maxLength={2}
+                    value={draft.state ?? ''}
+                    onChange={(e) => set({ state: e.target.value.toUpperCase() })}
+                  />
+                  <Field
+                    label="Téléphone"
+                    placeholder="0102030405"
+                    value={draft.phone ?? ''}
+                    onChange={(e) => set({ phone: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {saveAddress.isError && (
+              <Alert type="error">{(saveAddress.error as Error).message}</Alert>
+            )}
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

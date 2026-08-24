@@ -19,6 +19,7 @@ import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
+import { Modal } from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import { cn } from '../components/ui/cn';
 import { describe } from '../components/ui/PackageTypePicker';
@@ -244,126 +245,139 @@ export default function PackageTypes() {
         </div>
 
         <div className="lg:sticky lg:top-4">
-          {draft ? (
-            <Card>
-              <CardTitle title={editing ? 'Modifier le type' : 'Nouveau type de colis'} />
-              <form onSubmit={submit} className="space-y-3">
-                <Field
-                  label="Nom"
-                  required
-                  placeholder="DS620, Borne Spherik…"
-                  value={draft.label}
-                  onChange={(e) => set({ label: e.target.value })}
-                />
-
-                <Field
-                  label="Poids (kg)"
-                  required
-                  type="number"
-                  step="0.1"
-                  min="0.1"
-                  placeholder="12.5"
-                  value={draft.weight}
-                  onChange={(e) => set({ weight: e.target.value })}
-                />
-
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[--k-muted]">
-                    Dimensions (facultatives)
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Field
-                      label="Longueur"
-                      type="number"
-                      min="1"
-                      value={draft.length ?? ''}
-                      onChange={(e) => set({ length: e.target.value })}
-                    />
-                    <Field
-                      label="Largeur"
-                      type="number"
-                      min="1"
-                      value={draft.width ?? ''}
-                      onChange={(e) => set({ width: e.target.value })}
-                    />
-                    <Field
-                      label="Hauteur"
-                      type="number"
-                      min="1"
-                      value={draft.height ?? ''}
-                      onChange={(e) => set({ height: e.target.value })}
-                    />
-                  </div>
-                  <p className="mt-1 text-[12px] text-[--k-muted]">
-                    En centimètres. UPS ne les prend en compte que si les trois sont renseignées.
-                  </p>
-                </div>
-
-                <Field
-                  label="Description"
-                  placeholder="Imprimante photo DS620"
-                  value={draft.description ?? ''}
-                  onChange={(e) => set({ description: e.target.value })}
-                />
-
-                <SelectField
-                  label="Type d'emballage"
-                  value={draft.packagingType ?? '02'}
-                  onChange={(e) => set({ packagingType: e.target.value })}
-                >
-                  {(codes.data ?? [{ code: '02', name: 'Colis client' }]).map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </SelectField>
-
-                <Field
-                  label="Référence par défaut"
-                  placeholder="Laissez vide si elle change à chaque envoi"
-                  value={draft.reference ?? ''}
-                  onChange={(e) => set({ reference: e.target.value })}
-                />
-
-                {save.isError && <Alert type="error">{(save.error as Error).message}</Alert>}
-
-                <div className="flex items-center gap-2 border-t border-[--k-border] pt-3">
-                  <Button type="submit" isLoading={save.isPending} disabled={missing.length > 0}>
-                    {editing ? 'Enregistrer' : 'Ajouter au catalogue'}
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={closeForm}>
-                    Annuler
-                  </Button>
-                </div>
-
-                {missing.length > 0 && (
-                  <p className="text-[12px] text-[--k-muted]">
-                    Champs obligatoires manquants : {missing.join(', ')}
-                  </p>
-                )}
-              </form>
-            </Card>
-          ) : (
-            <Card>
-              <CardTitle title="À quoi ça sert" />
-              <p className="text-[13px] text-[--k-muted]">
-                Sur les pages <strong className="text-[--k-text]">Étiquettes</strong> et{' '}
-                <strong className="text-[--k-text]">Tarifs</strong>, un sélecteur « Charger un type
-                de colis » remplit poids et dimensions en un clic. Indiquez une quantité pour
-                ajouter plusieurs colis identiques d’un coup.
-              </p>
-              <p className="mt-3 text-[13px] text-[--k-muted]">
-                Dans l’envoi groupé, une colonne <code>type</code> du CSV suffit : le poids est
-                retrouvé automatiquement.
-              </p>
-              <p className="mt-3 text-[12px] text-[--k-muted]">
-                Les valeurs restent modifiables au moment de l’envoi : un cas particulier se corrige
-                à la main, sans créer un type dédié.
-              </p>
-            </Card>
-          )}
+          <Card>
+            <CardTitle title="À quoi ça sert" />
+            <p className="text-[13px] text-[--k-muted]">
+              Sur les pages <strong className="text-[--k-text]">Étiquettes</strong> et{' '}
+              <strong className="text-[--k-text]">Tarifs</strong>, un sélecteur « Charger un type
+              de colis » remplit poids et dimensions en un clic. Indiquez une quantité pour
+              ajouter plusieurs colis identiques d’un coup.
+            </p>
+            <p className="mt-3 text-[13px] text-[--k-muted]">
+              Dans l’envoi groupé, une colonne <code>type</code> du CSV suffit : le poids est
+              retrouvé automatiquement.
+            </p>
+            <p className="mt-3 text-[12px] text-[--k-muted]">
+              Les valeurs restent modifiables au moment de l’envoi : un cas particulier se corrige
+              à la main, sans créer un type dédié.
+            </p>
+          </Card>
         </div>
       </div>
+
+      <Modal
+        open={draft !== null}
+        onClose={closeForm}
+        title={editing ? 'Modifier le type' : 'Nouveau type de colis'}
+        hint={editing ? editing.label : 'Poids et dimensions préremplis sur les pages d’expédition.'}
+        footer={
+          <div className="flex items-center gap-2">
+            <Button
+              type="submit"
+              form="package-type-form"
+              isLoading={save.isPending}
+              disabled={missing.length > 0}
+            >
+              {editing ? 'Enregistrer' : 'Ajouter au catalogue'}
+            </Button>
+            <Button type="button" variant="ghost" onClick={closeForm}>
+              Annuler
+            </Button>
+            {missing.length > 0 && (
+              <p className="ml-auto text-right text-[12px] text-[--k-muted]">
+                Champs obligatoires manquants : {missing.join(', ')}
+              </p>
+            )}
+          </div>
+        }
+      >
+        {draft && (
+          // Le bouton d'envoi vit dans le pied du modal : `form` l'y rattache
+          // pour que la barre d'actions reste visible pendant le défilement.
+          <form id="package-type-form" onSubmit={submit} className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label="Nom"
+                required
+                placeholder="DS620, Borne Spherik…"
+                value={draft.label}
+                onChange={(e) => set({ label: e.target.value })}
+              />
+              <Field
+                label="Poids (kg)"
+                required
+                type="number"
+                step="0.1"
+                min="0.1"
+                placeholder="12.5"
+                value={draft.weight}
+                onChange={(e) => set({ weight: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[--k-muted]">
+                Dimensions (facultatives)
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <Field
+                  label="Longueur"
+                  type="number"
+                  min="1"
+                  value={draft.length ?? ''}
+                  onChange={(e) => set({ length: e.target.value })}
+                />
+                <Field
+                  label="Largeur"
+                  type="number"
+                  min="1"
+                  value={draft.width ?? ''}
+                  onChange={(e) => set({ width: e.target.value })}
+                />
+                <Field
+                  label="Hauteur"
+                  type="number"
+                  min="1"
+                  value={draft.height ?? ''}
+                  onChange={(e) => set({ height: e.target.value })}
+                />
+              </div>
+              <p className="mt-1 text-[12px] text-[--k-muted]">
+                En centimètres. UPS ne les prend en compte que si les trois sont renseignées.
+              </p>
+            </div>
+
+            <Field
+              label="Description"
+              placeholder="Imprimante photo DS620"
+              value={draft.description ?? ''}
+              onChange={(e) => set({ description: e.target.value })}
+            />
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelectField
+                label="Type d'emballage"
+                value={draft.packagingType ?? '02'}
+                onChange={(e) => set({ packagingType: e.target.value })}
+              >
+                {(codes.data ?? [{ code: '02', name: 'Colis client' }]).map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </SelectField>
+              <Field
+                label="Référence par défaut"
+                placeholder="Laissez vide si elle change"
+                value={draft.reference ?? ''}
+                onChange={(e) => set({ reference: e.target.value })}
+              />
+            </div>
+
+            {save.isError && <Alert type="error">{(save.error as Error).message}</Alert>}
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }
