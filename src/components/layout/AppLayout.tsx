@@ -1,4 +1,4 @@
-import React, { Component, Suspense, useState, useEffect } from 'react';
+import React, { Component, Suspense, useState, useEffect, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { loadRemoteComponent } from '../../remoteLoader';
@@ -119,29 +119,78 @@ export default function AppLayout() {
    * Correctif de contournement : la vraie solution est que le hub rende des
    * `<a href>`. Tant qu'il ne le fait pas, cela rend le menu utilisable.
    */
-  const interceptModifiedClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  /** Horodatage du dernier onglet ouvert, pour ne pas en ouvrir trois. */
+  const lastOpenRef = useRef(0);
+
+  const interceptModifiedClick = (e: MouseEvent) => {
     const modified = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
     if (!modified) return;
 
-    // Remonte au conteneur cliquable pour retrouver le libellé de l'entrée.
-    const target = (e.target as HTMLElement).closest('button, [role="button"], a');
-    if (!target) return;
-
     // Une vraie ancre gère déjà le cas : ne pas s'en mêler.
-    if (target.tagName === 'A' && target.getAttribute('href')) return;
+    const anchor = (e.target as HTMLElement).closest('a[href]');
+    if (anchor) return;
 
-    const label = target.textContent?.trim();
-    if (!label) return;
+    // Le hub peut rendre l'entrée comme un <button>, un <div> ou un <li> :
+    // plutôt que de deviner sa structure, on remonte les ancêtres jusqu'à
+    // en trouver un dont le texte correspond exactement à une entrée du menu.
+    const items = SIDEBAR_SECTIONS.flatMap((s) => s.items);
+    const normalize = (v: string) => v.trim().toLowerCase();
 
-    const item = SIDEBAR_SECTIONS.flatMap((s) => s.items).find(
-      (i) => i.label.toLowerCase() === label.toLowerCase(),
-    );
+    let node: HTMLElement | null = e.target as HTMLElement;
+    let item: (typeof items)[number] | undefined;
+
+    // 5 niveaux : au-delà, on remonterait jusqu'à la section entière et le
+    // texte engloberait plusieurs entrées.
+    for (let depth = 0; node && depth < 5 && !item; depth += 1) {
+      const text = normalize(node.textContent ?? '');
+      if (text) item = items.find((i) => normalize(i.label) === text);
+      node = node.parentElement;
+    }
+
     if (!item) return;
 
     e.preventDefault();
+    // stopImmediatePropagation et non stopPropagation : le hub peut avoir
+    // posé son écouteur sur le même élément, et il s'exécuterait quand même.
+    e.stopImmediatePropagation();
     e.stopPropagation();
+
+    // mousedown, click et auxclick se suivent sur un même geste : sans cette
+    // garde, un seul clic ouvrirait deux ou trois onglets.
+    const now = Date.now();
+    if (now - lastOpenRef.current < 500) return;
+    lastOpenRef.current = now;
+
     window.open(item.to, '_blank', 'noopener');
   };
+
+  /**
+   * Pose l'interception en DOM natif, en phase de capture.
+   *
+   * `onClickCapture` de React ne suffit pas : React délègue ses événements à
+   * la racine du document, donc un gestionnaire natif posé par le hub sur
+   * l'entrée elle-même s'exécute avant. Ici l'écouteur est sur le conteneur
+   * et en capture, donc bien avant tout ce que le hub aura pu attacher.
+   */
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el) return;
+
+    el.addEventListener('click', interceptModifiedClick, true);
+    // auxclick porte le clic molette, absent de l'événement click.
+    el.addEventListener('auxclick', interceptModifiedClick, true);
+    // mousedown : certains menus naviguent dès l'appui, sans attendre le clic.
+    el.addEventListener('mousedown', interceptModifiedClick, true);
+
+    return () => {
+      el.removeEventListener('click', interceptModifiedClick, true);
+      el.removeEventListener('auxclick', interceptModifiedClick, true);
+      el.removeEventListener('mousedown', interceptModifiedClick, true);
+    };
+    // Le gestionnaire ne capture que SIDEBAR_SECTIONS, une constante.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const localTopbar = <Topbar onToggleMobileMenu={() => setMobileMenuOpen((v) => !v)} />;
   const localSidebar = (
@@ -169,13 +218,10 @@ export default function AppLayout() {
       </RemoteErrorBoundary>
 
       <div className="flex flex-1 min-h-0">
-        {/* onClickCapture et onAuxClickCapture : le clic est intercepté avant
-            d'atteindre le menu du hub, qui l'avalerait sans ouvrir d'onglet. */}
-        <div
-          className="hidden md:block"
-          onClickCapture={interceptModifiedClick}
-          onAuxClickCapture={interceptModifiedClick}
-        >
+        {/* L'écouteur est posé en DOM natif (voir l'effet plus haut) et non
+            via onClickCapture : React délègue ses événements à la racine, si
+            bien qu'un gestionnaire natif du hub s'exécuterait avant lui. */}
+        <div className="hidden md:block" ref={sidebarRef}>
           <RemoteErrorBoundary fallback={localSidebar}>
             <Suspense fallback={<SidebarFallback />}>
               <RemoteSidebar
