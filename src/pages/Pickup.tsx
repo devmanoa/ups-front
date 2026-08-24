@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Truck, CalendarCheck, Plus, Trash2, XCircle, CheckCircle2 } from 'lucide-react';
 import { api, type PickupPayload } from '../services/api';
 import type { PickupResult, PickupPiece, Address } from '../types/ups';
@@ -11,6 +12,7 @@ import { SubmitBar } from '../components/ui/SubmitBar';
 import { Field, SelectField } from '../components/ui/Field';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
 import { AddressPicker } from '../components/ui/AddressPicker';
+import { TrackingNumberPicker } from '../components/ui/TrackingNumberPicker';
 import Button from '../components/ui/Button';
 import { money } from '../utils/format';
 
@@ -32,6 +34,30 @@ export default function Pickup() {
   const [contactName, setContactName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
+  const [trackingNumbers, setTrackingNumbers] = useState<string[]>([]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  /**
+   * Arrivée depuis « Prévoir un enlèvement » sur la page Étiquettes : les
+   * numéros passent par l'URL. Ils sont retirés ensuite pour qu'un rechargement
+   * ne les réinjecte pas après une modification manuelle.
+   */
+  useEffect(() => {
+    const fromUrl = searchParams.get('tracking');
+    if (!fromUrl) return;
+
+    const numbers = fromUrl
+      .split(',')
+      .map((n) => n.trim().toUpperCase())
+      .filter(Boolean)
+      .slice(0, 30);
+
+    if (numbers.length) setTrackingNumbers((prev) => [...new Set([...prev, ...numbers])]);
+
+    searchParams.delete('tracking');
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const containers = useQuery({
     queryKey: ['containers'],
@@ -81,6 +107,7 @@ export default function Pickup() {
       contactName,
       companyName,
       phone,
+      trackingNumbers: trackingNumbers.length ? trackingNumbers : undefined,
     });
   };
 
@@ -255,7 +282,17 @@ export default function Pickup() {
                 Ajouter une ligne
               </Button>
             </div>
+          </Card>
 
+          <Card>
+            <CardTitle
+              title="Colis concernés"
+              hint="Rattache l'enlèvement aux étiquettes déjà créées."
+            />
+            <TrackingNumberPicker value={trackingNumbers} onChange={setTrackingNumbers} />
+          </Card>
+
+          <Card>
             <SubmitBar
               isLoading={mutation.isPending}
               blockedReason={blockedReason}
@@ -288,6 +325,24 @@ export default function Pickup() {
                     {money(mutation.data.charge, mutation.data.currency || 'EUR')}
                   </span>
                 </div>
+              )}
+
+              {/* Confirme ce qui a été rattaché : les doublons ont été retirés
+                  côté backend, le compte peut différer de la saisie. */}
+              {mutation.data.trackingNumbers && mutation.data.trackingNumbers.length > 0 && (
+                <Card>
+                  <CardTitle
+                    title="Colis rattachés"
+                    hint={`${mutation.data.trackingNumbers.length} colis`}
+                  />
+                  <ul className="space-y-1">
+                    {mutation.data.trackingNumbers.map((n) => (
+                      <li key={n} className="font-mono text-[12px] text-[--k-text]">
+                        {n}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
               )}
 
               <Card>

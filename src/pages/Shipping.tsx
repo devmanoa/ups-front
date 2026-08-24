@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer, Truck } from 'lucide-react';
 import { api, type ShipmentPayload } from '../services/api';
 import type { PackageInput, ShipmentResult, VoidResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -74,6 +75,12 @@ export default function Shipping() {
   const voidMutation = useMutation<VoidResult, Error, string>({
     mutationFn: (shipmentId) => api.voidShipment(shipmentId),
   });
+
+  /** Numéros des colis créés, à rattacher à un éventuel enlèvement. */
+  const trackingNumbers =
+    mutation.data?.packages
+      ?.map((p) => p.trackingNumber)
+      .filter((n): n is string => Boolean(n)) ?? [];
 
   const set = (patch: Partial<Address>) => setShipTo((prev) => ({ ...prev, ...patch }));
 
@@ -276,7 +283,18 @@ export default function Shipping() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[--k-border] bg-[--k-surface] p-3">
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[--k-border] bg-[--k-surface] p-3">
+                {/* Les numéros passent par l'URL ; l'adresse d'enlèvement n'est
+                    pas pré-remplie, c'est celle de l'expéditeur (d'où part le
+                    chauffeur), pas celle du destinataire de l'étiquette. */}
+                {trackingNumbers.length > 0 && (
+                  <Link to={`/pickup?tracking=${encodeURIComponent(trackingNumbers.join(','))}`}>
+                    <Button type="button" variant="secondary" size="sm">
+                      <Truck className="h-4 w-4" />
+                      Prévoir un enlèvement
+                    </Button>
+                  </Link>
+                )}
                 <SaveToBook address={shipTo} suggestedLabel={shipTo.name} />
               </div>
 

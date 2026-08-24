@@ -164,6 +164,8 @@ export interface PickupPayload {
   companyName?: string;
   phone?: string;
   residential?: boolean;
+  /** Colis rattachés à l'enlèvement (TrackingData UPS, 30 maximum). */
+  trackingNumbers?: string[];
 }
 
 export interface UploadPayload {

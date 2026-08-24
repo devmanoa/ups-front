@@ -77,6 +77,26 @@ d'ajouter plusieurs colis identiques d'un coup : trois bornes, une seule action.
 Le poids seul est obligatoire ; les dimensions sont facultatives, UPS ne les
 prenant en compte que si les trois sont renseignées.
 
+### Enlèvements rattachés aux étiquettes
+
+La page **Enlèvement** comporte une section « Colis concernés », qui manquait :
+les numéros de suivi n'étaient transmis à UPS d'aucune façon. Deux moyens de les
+renseigner :
+
+- **saisie manuelle** d'un numéro, avec avertissement si la longueur inhabituelle
+- **recherche dans les étiquettes créées**, avec destinataire et date affichés pour
+  ne pas confondre deux envois proches
+
+Après création d'une étiquette, un bouton **« Prévoir un enlèvement »** ouvre la
+page avec les numéros déjà rattachés.
+
+> L'adresse d'enlèvement n'est **pas** pré-remplie depuis l'étiquette : c'est celle
+> de l'expéditeur, d'où part le chauffeur, et non celle du destinataire. La
+> pré-remplir depuis `shipTo` enverrait un chauffeur à la mauvaise adresse.
+
+Maximum 30 colis par enlèvement — limite de l'API UPS. Sans base de données, la
+recherche est indisponible mais la saisie manuelle reste utilisable.
+
 ### Impression des étiquettes
 
 L'impression s'ouvre **automatiquement dès l'étiquette créée**, comme sur le site

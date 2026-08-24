@@ -190,6 +190,8 @@ export interface PickupResult {
   charge: number | null;
   currency: string | null;
   readyTime: string | null;
+  /** Colis effectivement rattachés, après déduplication. */
+  trackingNumbers?: string[];
 }
 
 export interface ContainerOption {
