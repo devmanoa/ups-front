@@ -27,6 +27,62 @@ const SIDEBAR_SECTIONS = LOCAL_SECTIONS.map((section) => ({
   items: section.items.map((item) => ({ ...item, path: item.to })),
 }));
 
+/**
+ * Sections pour le menu fédéré, avec un vrai lien glissé dans le libellé.
+ *
+ * Le hub rend chaque entrée en `<button onClick>`. Un bouton n'a ni
+ * Ctrl+clic, ni clic du milieu, ni « Ouvrir dans un nouvel onglet » au clic
+ * droit : le navigateur réserve ces gestes aux `<a href>`, et aucun
+ * JavaScript ne les simule — on peut lire `ctrlKey`, on ne peut pas faire
+ * apparaître un menu contextuel.
+ *
+ * `label` étant rendu tel quel par le hub, on y place un lien transparent
+ * qui recouvre la ligne (motif « stretched link »). C'est lui que la souris
+ * touche, donc le navigateur offre tout son nécessaire — sans qu'une ligne
+ * du hub soit modifiée.
+ */
+function federatedSections(
+  collapsed: boolean,
+  onPlainClick: (path: string, e: React.MouseEvent) => void,
+) {
+  return SIDEBAR_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.map((item) => ({
+      ...item,
+      label: (
+        <>
+          {item.label}
+          {/* Inerte quand la barre est repliée : le libellé vit alors dans
+              l'infobulle, elle-même positionnée. Le lien s'y calerait et
+              laisserait une zone cliquable invisible à côté de la barre.
+              L'interception au clavier reprend la main dans ce cas. */}
+          {!collapsed && (
+            <a
+              href={item.to}
+              aria-hidden="true"
+              tabIndex={-1}
+              // Le bloc conteneur est le <button>, qui porte `relative` :
+              // le lien recouvre donc la ligne entière, pas seulement le
+              // libellé — et le `truncate` du span ne le rogne pas.
+              className="absolute inset-0"
+              // Sans stopPropagation, le clic remonte au onClick du bouton
+              // et le hub ouvre une seconde navigation.
+              //
+              // Le clic simple est confié au routeur : laisser le lien agir
+              // rechargerait toute l'application. Les clics modifiés, eux,
+              // passent au navigateur — c'est tout l'intérêt d'un vrai <a>.
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlainClick(item.to, e);
+              }}
+            />
+          )}
+        </>
+      ),
+    })),
+  }));
+}
+
 // Placeholders dimensionnés comme les composants finaux pour éviter un saut visuel.
 function HeaderFallback() {
   return (
@@ -108,16 +164,30 @@ export default function AppLayout() {
   const handleNavigate = (path: string) => navigate(path);
 
   /**
-   * Rétablit Ctrl+clic et clic molette sur le menu fédéré du hub.
+   * Clic simple sur le lien glissé dans le libellé : navigation côté client.
    *
-   * Le contrat du remote est un callback `onNavigate`, donc ses entrées sont
-   * des `<button>` sans `href` : le navigateur n'a rien à ouvrir dans un
-   * nouvel onglet, et le clic droit ne propose pas l'option. On intercepte
-   * donc le clic en phase de capture, avant que le hub ne le traite, et on
-   * ouvre l'onglet nous-mêmes.
+   * Un clic modifié (Ctrl, Cmd, Maj, molette) n'entre pas ici — le navigateur
+   * l'a déjà pris en charge et ouvre son onglet, ce qui est le but.
+   */
+  const handleLinkClick = (path: string, e: React.MouseEvent) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    navigate(path);
+  };
+
+  const remoteSections = federatedSections(sidebarCollapsed, handleLinkClick);
+  // Le menu mobile n'est jamais replié : ses libellés portent donc toujours
+  // le lien.
+  const mobileSections = federatedSections(false, handleLinkClick);
+
+  /**
+   * Repli pour la barre repliée, où le lien du libellé est inerte.
    *
-   * Correctif de contournement : la vraie solution est que le hub rende des
-   * `<a href>`. Tant qu'il ne le fait pas, cela rend le menu utilisable.
+   * Le lien de `federatedSections` couvre le cas courant et apporte les
+   * gestes natifs. Il ne peut pas être posé quand la barre est repliée : le
+   * libellé vit alors dans une infobulle positionnée, et le lien s'y calerait.
+   * Cette interception rétablit alors Ctrl+clic et clic molette, sans le menu
+   * contextuel — qu'aucun JavaScript ne peut produire.
    */
   /** Horodatage du dernier onglet ouvert, pour ne pas en ouvrir trois. */
   const lastOpenRef = useRef(0);
@@ -225,7 +295,7 @@ export default function AppLayout() {
           <RemoteErrorBoundary fallback={localSidebar}>
             <Suspense fallback={<SidebarFallback />}>
               <RemoteSidebar
-                sections={SIDEBAR_SECTIONS}
+                sections={remoteSections}
                 activePath={location.pathname}
                 onNavigate={handleNavigate}
                 collapsed={sidebarCollapsed}
@@ -247,7 +317,7 @@ export default function AppLayout() {
               <RemoteErrorBoundary fallback={localMobileSidebar}>
                 <Suspense fallback={<SidebarFallback />}>
                   <RemoteSidebar
-                    sections={SIDEBAR_SECTIONS}
+                    sections={mobileSections}
                     activePath={location.pathname}
                     onNavigate={handleNavigate}
                     collapsed={false}
