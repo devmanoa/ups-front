@@ -324,9 +324,9 @@ export default function ShipmentDetail() {
           <Card>
             <CardTitle
               title="Destination"
-              hint={[shipment.recipient.postalCode, shipment.recipient.city]
+              hint={`${[shipment.recipient.postalCode, shipment.recipient.city]
                 .filter(Boolean)
-                .join(' ')}
+                .join(' ')} — et les points relais UPS à proximité`}
             />
             <AddressMap
               addressLine1={shipment.recipient.address}
@@ -334,7 +334,8 @@ export default function ShipmentDetail() {
               postalCode={shipment.recipient.postalCode}
               country={shipment.recipient.country}
               label={shipment.recipient.name ?? shipment.recipient.company}
-              height="300px"
+              height="320px"
+              showAccessPoints
             />
           </Card>
 
