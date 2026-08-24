@@ -42,16 +42,18 @@ export function isPrintable(mime: string): boolean {
 export function printBase64(base64: string, mime: string): boolean {
   if (!isPrintable(mime)) return false;
 
+  // Une image chargée directement dans l'iframe hérite de la mise en page par
+  // défaut du navigateur pour un document image isolé : l'étiquette UPS
+  // (GIF ~800×1200) déborde de la A4 et sort une page blanche. On l'enveloppe
+  // donc dans un document contrôlé. Le PDF, lui, porte déjà sa pagination.
+  if (mime.startsWith('image/')) {
+    return printImages([{ base64, mime }]) > 0;
+  }
+
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
 
-  const frame = document.createElement('iframe');
-  frame.style.position = 'fixed';
-  frame.style.right = '0';
-  frame.style.bottom = '0';
-  frame.style.width = '0';
-  frame.style.height = '0';
-  frame.style.border = '0';
+  const frame = createPrintFrame();
 
   /** Libère l'iframe et l'URL une fois la boîte de dialogue refermée. */
   const cleanup = () => {
@@ -87,6 +89,18 @@ export function printBase64(base64: string, mime: string): boolean {
   return true;
 }
 
+/** Iframe hors écran servant de support d'impression. */
+function createPrintFrame(): HTMLIFrameElement {
+  const frame = document.createElement('iframe');
+  frame.style.position = 'fixed';
+  frame.style.right = '0';
+  frame.style.bottom = '0';
+  frame.style.width = '0';
+  frame.style.height = '0';
+  frame.style.border = '0';
+  return frame;
+}
+
 /**
  * Imprime plusieurs étiquettes en une seule boîte de dialogue, une par page.
  *
@@ -98,13 +112,7 @@ export function printImages(labels: Array<{ base64: string; mime: string }>): nu
   const printable = labels.filter((l) => l.mime.startsWith('image/'));
   if (printable.length === 0) return 0;
 
-  const frame = document.createElement('iframe');
-  frame.style.position = 'fixed';
-  frame.style.right = '0';
-  frame.style.bottom = '0';
-  frame.style.width = '0';
-  frame.style.height = '0';
-  frame.style.border = '0';
+  const frame = createPrintFrame();
   document.body.appendChild(frame);
 
   const doc = frame.contentDocument;
@@ -120,10 +128,18 @@ export function printImages(labels: Array<{ base64: string; mime: string }>): nu
   doc.open();
   doc.write(
     `<!doctype html><html><head><meta charset="utf-8"><style>` +
-      // Une étiquette par page : sans le saut, elles s'enchaîneraient.
-      `img{display:block;max-width:100%;page-break-after:always}` +
-      `img:last-child{page-break-after:auto}` +
+      // Marge nulle : l'étiquette porte déjà la sienne, et le navigateur
+      // ajouterait sinon ses en-têtes et pieds de page sur l'étiquette.
+      `@page{margin:0}` +
       `body{margin:0}` +
+      // `height:auto` avec `max-height` borne la page dans les deux sens :
+      // `max-width` seul laisse une étiquette haute déborder et produire une
+      // page blanche à la suite.
+      `img{display:block;width:auto;height:auto;max-width:100%;max-height:100vh;` +
+      // Une étiquette par page : sans le saut, elles s'enchaîneraient.
+      `page-break-after:always}` +
+      // Sans cette exception, le saut du dernier élément crée une page vide.
+      `img:last-child{page-break-after:auto}` +
       `</style></head><body>${images}</body></html>`,
   );
   doc.close();
