@@ -99,7 +99,11 @@ export function PackageTypePicker({
             onChange={(e) => setQuantity(Number(e.target.value) || 1)}
             title="Quantité à ajouter"
             aria-label="Quantité"
-            className="input-field w-16 shrink-0 text-center"
+            // `.input-field` impose width:100% et l'emporte sur l'utilitaire
+            // Tailwind (même spécificité, feuille chargée après) : le champ
+            // occupait toute la ligne et chassait le bouton hors de la carte.
+            style={{ width: '4rem' }}
+            className="input-field shrink-0 text-center"
           />
         )}
 
