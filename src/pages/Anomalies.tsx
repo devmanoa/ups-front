@@ -8,6 +8,7 @@ import {
   PauseCircle,
   PackageX,
   ExternalLink,
+  FileText,
   Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -18,6 +19,7 @@ import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 import { EmptyState } from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
+import { ButtonLink } from '../components/ui/ButtonLink';
 import { formatDate } from '../utils/format';
 
 const META: Record<
@@ -176,9 +178,18 @@ function AnomalyRow({ shipment }: { shipment: StoredShipment }) {
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-[13px] font-medium text-[--k-text]">
-                {shipment.trackingNumber || shipment.shipmentId}
-              </span>
+              {shipment.trackingNumber ? (
+                <Link
+                  to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                  className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
+                >
+                  {shipment.trackingNumber}
+                </Link>
+              ) : (
+                <span className="font-mono text-[13px] font-medium text-[--k-text]">
+                  {shipment.shipmentId}
+                </span>
+              )}
               {/* Un envoi peut cumuler plusieurs anomalies. */}
               {(shipment.anomalies ?? []).map((a) => (
                 <span
@@ -211,12 +222,23 @@ function AnomalyRow({ shipment }: { shipment: StoredShipment }) {
         </div>
 
         {shipment.trackingNumber && (
-          <Link to={`/tracking?number=${encodeURIComponent(shipment.trackingNumber)}`}>
-            <Button type="button" variant="secondary" size="sm">
+          <>
+            <ButtonLink
+              to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+              variant="secondary"
+              title="Détail, journal et commentaires"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Détail
+            </ButtonLink>
+            <ButtonLink
+              to={`/tracking?number=${encodeURIComponent(shipment.trackingNumber)}`}
+              variant="secondary"
+            >
               <ExternalLink className="h-3.5 w-3.5" />
               Suivi
-            </Button>
-          </Link>
+            </ButtonLink>
+          </>
         )}
       </div>
     </div>

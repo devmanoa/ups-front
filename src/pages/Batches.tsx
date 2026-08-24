@@ -336,9 +336,16 @@ export function BatchDetailPage() {
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[13px] font-medium text-[--k-text]">
-                      {shipment.trackingNumber || '—'}
-                    </span>
+                    {shipment.trackingNumber ? (
+                      <Link
+                        to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                        className="font-mono text-[13px] font-medium text-[--k-text] hover:text-[--k-primary] hover:underline"
+                      >
+                        {shipment.trackingNumber}
+                      </Link>
+                    ) : (
+                      <span className="font-mono text-[13px] font-medium text-[--k-text]">—</span>
+                    )}
                     <Badge tone={meta.tone}>
                       <Icon className="h-3 w-3" />
                       {meta.label}

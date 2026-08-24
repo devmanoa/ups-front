@@ -250,6 +250,8 @@ export interface StoredShipment {
   /** Auteur de la création, lu dans le journal : absent avant Keycloak. */
   creator?: ShipmentActor | null;
   commentCount?: number;
+  /** Nombre de colis de l'expédition ; présent sur les listes regroupées. */
+  packageCount?: number;
 }
 
 /** Auteur d'une action ou d'un commentaire, recopié depuis Keycloak. */

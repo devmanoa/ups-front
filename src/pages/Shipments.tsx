@@ -28,6 +28,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Field, SelectField } from '../components/ui/Field';
 import Button from '../components/ui/Button';
+import { ButtonLink } from '../components/ui/ButtonLink';
 import { money, downloadBase64, printBase64, formatDate } from '../utils/format';
 import { ShipmentStatsPanel } from '../components/ShipmentStatsPanel';
 
@@ -428,6 +429,9 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
           <p className="mt-0.5 text-[12px] text-[--k-muted]">
             {[
               shipment.serviceName,
+              // Un envoi multi-colis n'occupe qu'une ligne : sans ce compte,
+              // rien ne distinguerait un colis de trois.
+              (shipment.packageCount ?? 1) > 1 ? `${shipment.packageCount} colis` : null,
               shipment.billingWeight,
               `Créé le ${formatDate(shipment.createdAt)}`,
               // L'auteur n'existe que depuis l'activation de Keycloak : on
@@ -458,20 +462,19 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
           )}
           <div className="flex flex-wrap justify-end gap-1.5">
             {shipment.trackingNumber && (
-              <Link to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}>
-                <Button type="button" variant="ghost" size="sm" title="Détail, journal et commentaires">
-                  <FileText className="h-3.5 w-3.5" />
-                  Détail
-                </Button>
-              </Link>
+              <ButtonLink
+                to={`/shipments/${encodeURIComponent(shipment.trackingNumber)}`}
+                title="Détail, journal et commentaires"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Détail
+              </ButtonLink>
             )}
             {shipment.trackingNumber && (
-              <Link to={`/tracking?number=${encodeURIComponent(shipment.trackingNumber)}`}>
-                <Button type="button" variant="ghost" size="sm">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Suivi
-                </Button>
-              </Link>
+              <ButtonLink to={`/tracking?number=${encodeURIComponent(shipment.trackingNumber)}`}>
+                <ExternalLink className="h-3.5 w-3.5" />
+                Suivi
+              </ButtonLink>
             )}
             {shipment.hasLabel && (
               <>

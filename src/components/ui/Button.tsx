@@ -3,7 +3,11 @@ import type { ButtonHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from './cn';
 
-const VARIANTS = {
+/** Base commune au bouton et à ButtonLink, qui doit lui ressembler à l'identique. */
+export const BUTTON_BASE =
+  'inline-flex items-center justify-center gap-1.5 rounded-xl border font-medium transition disabled:opacity-50 disabled:cursor-not-allowed';
+
+export const VARIANTS = {
   primary:
     'bg-[--k-primary] text-white border-[--k-primary] hover:brightness-110 shadow-sm shadow-[--k-primary]/20',
   secondary: 'bg-white text-[--k-text] border-[--k-border] hover:bg-[--k-surface-2]',
@@ -13,7 +17,7 @@ const VARIANTS = {
   outline: 'bg-transparent text-[--k-text] border-[--k-border] hover:bg-[--k-surface-2]',
 };
 
-const SIZES = {
+export const SIZES = {
   sm: 'h-8 px-3 text-[13px]',
   md: 'h-9 px-4 text-sm',
   lg: 'h-10 px-5 text-sm',
@@ -31,7 +35,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center gap-1.5 rounded-xl border font-medium transition disabled:opacity-50 disabled:cursor-not-allowed',
+          BUTTON_BASE,
           SIZES[size],
           VARIANTS[variant],
           className
