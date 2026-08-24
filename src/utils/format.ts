@@ -196,15 +196,16 @@ export function isPlaceholderTracking(trackingNumber: string | null | undefined)
 /**
  * Identifiant à utiliser dans l'URL du détail d'un envoi.
  *
- * Le numéro de suivi si c'est un vrai, l'identifiant d'expédition sinon :
- * en CIE, tous les envois partagent le même numéro et le lien mènerait
- * toujours au même détail.
+ * Le numéro de suivi quand il est réel — lisible et partageable. Sinon
+ * l'identifiant local, seul à désigner un envoi et un seul : en CIE, numéro
+ * de suivi comme identifiant UPS sont partagés par toutes les expéditions.
  */
 export function shipmentKey(shipment: {
   trackingNumber?: string | null;
+  localShipmentId?: string | null;
   shipmentId?: string | null;
 }): string {
   const tracking = shipment.trackingNumber;
   if (tracking && !isPlaceholderTracking(tracking)) return tracking;
-  return shipment.shipmentId || tracking || '';
+  return shipment.localShipmentId || shipment.shipmentId || tracking || '';
 }

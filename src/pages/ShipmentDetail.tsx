@@ -25,6 +25,7 @@ import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
+import { RichTextEditor, sanitizeHtml, isHtmlEmpty } from '../components/ui/RichTextEditor';
 import { AddressMap } from '../components/AddressMap';
 import { cn } from '../components/ui/cn';
 import { money, formatDate, downloadBase64, printBase64, shipmentKey, isPlaceholderTracking } from '../utils/format';
@@ -92,9 +93,10 @@ export default function ShipmentDetail() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const text = body.trim();
-    if (!text || text.length > MAX_BODY) return;
-    addComment.mutate(text);
+    // `isHtmlEmpty` et non `trim()` : un éditeur vidé laisse souvent un
+    // `<br>` ou un `<div></div>` derrière lui, qui passerait pour du contenu.
+    if (isHtmlEmpty(body) || body.length > MAX_BODY) return;
+    addComment.mutate(sanitizeHtml(body));
   };
 
   if (detail.isLoading) {
@@ -343,19 +345,14 @@ export default function ShipmentDetail() {
             />
 
             <form onSubmit={submit} className="space-y-2">
-              <textarea
+              <RichTextEditor
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={3}
-                maxLength={MAX_BODY}
+                onChange={setBody}
                 placeholder="Client prévenu par téléphone, colis récupéré à l’agence…"
-                className="input-field h-auto py-2"
-                // `.input-field` fixe une hauteur de 36 px, taillée pour un
-                // champ d'une ligne : sans cela le textarea serait écrasé.
-                style={{ height: 'auto', minHeight: '72px' }}
+                disabled={addComment.isPending}
               />
               <div className="flex items-center gap-2">
-                <Button type="submit" isLoading={addComment.isPending} disabled={!body.trim()}>
+                <Button type="submit" isLoading={addComment.isPending} disabled={isHtmlEmpty(body)}>
                   <Send className="h-4 w-4" />
                   Commenter
                 </Button>
@@ -394,9 +391,14 @@ export default function ShipmentDetail() {
                         </span>
                         <span className="text-[--k-muted]">{formatDate(comment.createdAt)}</span>
                       </p>
-                      <p className="whitespace-pre-wrap text-[13px] text-[--k-text]">
-                        {comment.body}
-                      </p>
+                      {/* Le corps est du HTML enrichi. Il est réassaini à
+                          l'affichage et pas seulement à la saisie : une
+                          entrée créée hors de l'application, ou avant
+                          l'éditeur, ne doit pas pouvoir injecter de script. */}
+                      <div
+                        className="prose-comment text-[13px] text-[--k-text]"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(comment.body) }}
+                      />
                     </div>
                     {/* Un commentaire n'est supprimable que par son auteur : le
                         backend le vérifie, le bouton ne fait que l'annoncer. */}

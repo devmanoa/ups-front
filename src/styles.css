@@ -78,3 +78,15 @@ body {
   padding: 8px;
   background: #fff;
 }
+
+/* Rendu des commentaires enrichis : l'éditeur et l'affichage doivent se
+   ressembler, et le reset Tailwind supprime les puces et le gras natifs. */
+.prose-comment strong,
+.prose-comment b { font-weight: 600; }
+.prose-comment em,
+.prose-comment i { font-style: italic; }
+.prose-comment ul { list-style: disc; padding-left: 1.25rem; margin: 0.25rem 0; }
+.prose-comment ol { list-style: decimal; padding-left: 1.25rem; margin: 0.25rem 0; }
+.prose-comment li { margin: 0.125rem 0; }
+.prose-comment a { color: var(--k-primary); text-decoration: underline; }
+.prose-comment p { margin: 0.25rem 0; }

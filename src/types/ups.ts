@@ -252,6 +252,11 @@ export interface StoredShipment {
   commentCount?: number;
   /** Nombre de colis de l'expédition ; présent sur les listes regroupées. */
   packageCount?: number;
+  /**
+   * Identifiant d'expédition propre à l'application. Contrairement à
+   * `shipmentId`, qui vient d'UPS, il désigne un envoi et un seul.
+   */
+  localShipmentId?: string;
 }
 
 /** Auteur d'une action ou d'un commentaire, recopié depuis Keycloak. */
