@@ -23,6 +23,10 @@ export const runtimeConfig = {
     'ups-management'
   ),
   plateformUrl: resolve('PLATEFORM_URL', import.meta.env.VITE_PLATEFORM_URL),
+  // Application Antennes, pour renvoyer vers la fiche du contact depuis un
+  // envoi. Distincte de ANTENNES_API_URL, côté backend : celle-ci est
+  // l'interface web, celle-là le service de données.
+  antennesAppUrl: resolve('ANTENNES_APP_URL', import.meta.env.VITE_ANTENNES_APP_URL),
   // Clé Google Maps : visible côté navigateur par conception, elle doit être
   // restreinte par domaine dans la console Google Cloud.
   googleMapsApiKey: resolve('GOOGLE_MAPS_API_KEY', import.meta.env.VITE_GOOGLE_MAPS_API_KEY),

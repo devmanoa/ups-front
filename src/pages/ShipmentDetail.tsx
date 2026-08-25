@@ -15,9 +15,11 @@ import {
   Send,
   History,
   Boxes,
+  Building2,
 } from 'lucide-react';
 import { api } from '../services/api';
 import keycloak from '../config/keycloak';
+import { runtimeConfig } from '../config/runtime';
 import type { ShipmentStatus, StoredLabel } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardTitle } from '../components/ui/Card';
@@ -157,6 +159,7 @@ export default function ShipmentDetail() {
   // `sub` est l'identifiant Keycloak, celui que le backend compare pour
   // autoriser une suppression.
   const myId = keycloak.tokenParsed?.sub ?? null;
+  const antennesAppUrl = runtimeConfig.antennesAppUrl?.replace(/\/$/, '') ?? '';
 
   return (
     <div>
@@ -312,17 +315,36 @@ export default function ShipmentDetail() {
                   </p>
                 )}
 
-                {shipment.trackingNumber && (
-                  <a
-                    href={`https://www.ups.com/track?loc=fr_FR&tracknum=${encodeURIComponent(shipment.trackingNumber)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[13px] text-[--k-primary] hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Suivre sur ups.com
-                  </a>
-                )}
+                {/* Liens externes groupés : ils quittent tous l'application,
+                    et se lisent mieux sur une même ligne. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {shipment.trackingNumber && (
+                    <a
+                      href={`https://www.ups.com/track?loc=fr_FR&tracknum=${encodeURIComponent(shipment.trackingNumber)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[13px] text-[--k-primary] hover:underline"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Suivre sur ups.com
+                    </a>
+                  )}
+
+                  {/* Renvoi vers la fiche du contact dans Antennes, quand
+                      l'étiquette vient de là. Sans l'URL de l'application
+                      configurée, on ne fabrique pas de lien mort. */}
+                  {shipment.antenne && antennesAppUrl && (
+                    <a
+                      href={`${antennesAppUrl}/contacts/${shipment.antenne.contactId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[13px] text-[--k-primary] hover:underline"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      Voir l’antenne
+                    </a>
+                  )}
+                </div>
               </div>
 
               {/* Les points relais vivent ici plutôt que dans un bloc séparé :

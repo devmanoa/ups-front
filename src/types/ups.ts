@@ -257,6 +257,8 @@ export interface StoredShipment {
    * `shipmentId`, qui vient d'UPS, il désigne un envoi et un seul.
    */
   localShipmentId?: string;
+  /** Antenne d'origine, quand l'étiquette vient d'un lien Antennes. */
+  antenne?: { contactId: number; antenneId: number | null } | null;
 }
 
 /** Contact de l'application Antennes, prêt à remplir le formulaire. */
