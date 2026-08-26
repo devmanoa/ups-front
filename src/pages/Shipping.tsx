@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer, Truck, Building2 } from 'lucide-react';
+import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer, Truck, Building2, Warehouse } from 'lucide-react';
 import { api, type ShipmentPayload } from '../services/api';
 import type { PackageInput, ShipmentResult, VoidResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -64,6 +64,14 @@ export default function Shipping() {
   });
 
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
+
+  // L'adresse ne change pas d'un envoi à l'autre : une seule lecture suffit.
+  const shipper = useQuery({
+    queryKey: ['shipper'],
+    queryFn: () => api.getShipper(),
+    staleTime: Infinity,
+    retry: false,
+  });
 
   const antenne = useQuery({
     queryKey: ['antenne', antenneId],
@@ -178,6 +186,46 @@ export default function Shipping() {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
         <form onSubmit={submit} className="space-y-4">
+          {/* D'où part le colis : l'adresse vient des variables SHIPPER_* du
+              serveur et n'apparaissait nulle part. On la montre en tête, avant
+              le destinataire, dans l'ordre où on se pose la question. */}
+          <Card>
+            <CardTitle
+              title="Expéditeur"
+              hint="Adresse de départ, configurée sur le serveur"
+            />
+            {shipper.isLoading ? (
+              <p className="text-[13px] text-[--k-muted]">Chargement de l’adresse…</p>
+            ) : shipper.isError ? (
+              <Alert type="error">{(shipper.error as Error).message}</Alert>
+            ) : shipper.data && !shipper.data.configured ? (
+              <Alert type="error">
+                Adresse d’expédition incomplète — UPS refusera l’envoi. Champs manquants côté
+                serveur : {shipper.data.missing.join(', ')}.
+              </Alert>
+            ) : shipper.data ? (
+              <div className="flex items-start gap-2.5 text-[13px]">
+                <Warehouse className="mt-0.5 h-4 w-4 shrink-0 text-[--k-muted]" />
+                <p className="leading-relaxed text-[--k-text]">
+                  <span className="font-medium">{shipper.data.shipper.name}</span>
+                  {shipper.data.shipper.attentionName && (
+                    <span className="text-[--k-muted]">
+                      {' '}
+                      — {shipper.data.shipper.attentionName}
+                    </span>
+                  )}
+                  <span className="block">{shipper.data.shipper.addressLine}</span>
+                  <span className="block">
+                    {[shipper.data.shipper.postalCode, shipper.data.shipper.city]
+                      .filter(Boolean)
+                      .join(' ')}
+                    <span className="text-[--k-muted]"> ({shipper.data.shipper.country})</span>
+                  </span>
+                </p>
+              </div>
+            ) : null}
+          </Card>
+
           <Card>
             <CardTitle title="Destinataire" />
             <AddressPicker

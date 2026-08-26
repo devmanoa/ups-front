@@ -33,6 +33,7 @@ import type {
   ShipmentDetail,
   ShipmentComment,
   AntenneContact,
+  ShipperAddress,
   BatchesResult,
   BatchDetail,
   PackageType,
@@ -261,6 +262,12 @@ export const api = {
     request<TrackingResult>(`/api/tracking/${encodeURIComponent(trackingNumber)}`),
 
   getServices: () => request<ServiceOption[]>('/api/rating/services'),
+
+  /** Adresse d'expédition par défaut, telle que configurée sur le serveur. */
+  getShipper: () =>
+    request<{ shipper: ShipperAddress; configured: boolean; missing: string[] }>(
+      '/api/shipping/shipper',
+    ),
   getRates: (payload: RatePayload) => request<RatingResult>('/api/rating', { method: 'POST', body: payload }),
 
   createShipment: (payload: ShipmentPayload) =>

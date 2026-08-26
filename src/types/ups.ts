@@ -261,6 +261,17 @@ export interface StoredShipment {
   antenne?: { contactId: number; antenneId: number | null } | null;
 }
 
+/** Adresse d'expédition par défaut, configurée côté serveur (SHIPPER_*). */
+export interface ShipperAddress {
+  name: string;
+  attentionName: string;
+  addressLine: string;
+  city: string;
+  postalCode: string;
+  state: string;
+  country: string;
+}
+
 /** Contact de l'application Antennes, prêt à remplir le formulaire. */
 export interface AntenneContact {
   contactId: number;
