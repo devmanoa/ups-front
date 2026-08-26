@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Layers, Plus, Trash2, Upload, CheckCircle2, XCircle, FileDown, ClipboardList, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import type { BulkEntry, BulkResult } from '../types/ups';
+import type { BulkEntry, BulkResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardTitle } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
@@ -93,7 +93,18 @@ export default function BulkShipping() {
   const [entries, setEntries] = useState<BulkEntry[]>([emptyEntry()]);
   const [labelFormat, setLabelFormat] = useState('GIF');
   const [serviceCode, setServiceCode] = useState('11');
+  // Expediteur du lot : absent tant qu'on n'a pas change, le backend applique
+  // alors son adresse par defaut.
+  const [editShipFrom, setEditShipFrom] = useState(false);
+  const [shipFrom, setShipFrom] = useState<Address>({ country: 'FR' });
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
+
+  const shipper = useQuery({
+    queryKey: ['shipper'],
+    queryFn: () => api.getShipper(),
+    staleTime: Infinity,
+    retry: false,
+  });
 
   const services = useQuery({
     queryKey: ['services'],
@@ -106,6 +117,7 @@ export default function BulkShipping() {
       api.createBulkShipments({
         shipments: entries.map((e) => ({ ...e, serviceCode })),
         labelFormat,
+        shipFrom: editShipFrom ? shipFrom : undefined,
       }),
   });
 
@@ -165,13 +177,21 @@ export default function BulkShipping() {
     );
   });
 
+  // Memes champs obligatoires que pour un destinataire : UPS les exige.
+  const missingShipFrom = editShipFrom
+    ? (['name', 'addressLine1', 'city', 'postalCode', 'country'] as const)
+        .filter((f) => !shipFrom[f])
+    : [];
+
   const blockedReason = entries.length === 0
     ? 'Ajoutez au moins un destinataire'
     : invalid
       ? 'Chaque ligne doit être complète (nom, adresse, ville, code postal, pays, et poids ou type)'
       : entries.length > 50
         ? '50 expéditions maximum par lot'
-        : null;
+        : missingShipFrom.length
+          ? `Expéditeur — champs manquants : ${missingShipFrom.join(', ')}`
+          : null;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -343,6 +363,91 @@ export default function BulkShipping() {
               <option value="PDF">PDF</option>
               <option value="ZPL">ZPL (imprimante thermique)</option>
             </SelectField>
+          </div>
+
+          {/* L'expéditeur vaut pour tout le lot : un envoi groupé part d'un
+              seul endroit, et le répéter par ligne serait du bruit. */}
+          <div className="mt-4 border-t border-[--k-border] pt-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[12px] font-medium text-[--k-muted]">Expéditeur</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (!editShipFrom && shipper.data?.shipper) {
+                    const s = shipper.data.shipper;
+                    setShipFrom({
+                      name: s.name,
+                      attentionName: s.attentionName,
+                      addressLine1: s.addressLine,
+                      city: s.city,
+                      postalCode: s.postalCode,
+                      state: s.state,
+                      country: s.country || 'FR',
+                    });
+                  }
+                  setEditShipFrom((v) => !v);
+                }}
+              >
+                {editShipFrom ? 'Utiliser l’adresse par défaut' : 'Changer'}
+              </Button>
+            </div>
+
+            {editShipFrom ? (
+              <>
+                <AddressPicker
+                  className="mb-3"
+                  label="Charger depuis le carnet"
+                  onSelect={(address) => setShipFrom(address)}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="Nom"
+                    required
+                    value={shipFrom.name ?? ''}
+                    onChange={(e) => setShipFrom((p) => ({ ...p, name: e.target.value }))}
+                  />
+                  <Field
+                    label="Adresse"
+                    required
+                    value={shipFrom.addressLine1 ?? ''}
+                    onChange={(e) => setShipFrom((p) => ({ ...p, addressLine1: e.target.value }))}
+                  />
+                  <Field
+                    label="Ville"
+                    required
+                    value={shipFrom.city ?? ''}
+                    onChange={(e) => setShipFrom((p) => ({ ...p, city: e.target.value }))}
+                  />
+                  <Field
+                    label="Code postal"
+                    required
+                    value={shipFrom.postalCode ?? ''}
+                    onChange={(e) => setShipFrom((p) => ({ ...p, postalCode: e.target.value }))}
+                  />
+                  <Field
+                    label="Pays (ISO 2)"
+                    required
+                    maxLength={2}
+                    value={shipFrom.country ?? ''}
+                    onChange={(e) =>
+                      setShipFrom((p) => ({ ...p, country: e.target.value.toUpperCase() }))
+                    }
+                  />
+                </div>
+              </>
+            ) : (
+              <p className="text-[13px] text-[--k-text]">
+                {shipper.data?.shipper.name ?? 'Adresse par défaut'}
+                {shipper.data?.shipper.city && (
+                  <span className="text-[--k-muted]">
+                    {' '}
+                    — {shipper.data.shipper.postalCode} {shipper.data.shipper.city}
+                  </span>
+                )}
+              </p>
+            )}
           </div>
 
           <Alert type="info" className="mt-3">

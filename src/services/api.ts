@@ -352,7 +352,12 @@ export const api = {
   getAnomalies: (type?: string) =>
     request<AnomaliesResult>(`/api/shipments/anomalies${type ? `?type=${type}` : ''}`),
 
-  createBulkShipments: (payload: { shipments: BulkEntry[]; labelFormat?: string }) =>
+  createBulkShipments: (payload: {
+    shipments: BulkEntry[];
+    labelFormat?: string;
+    /** Adresse de départ du lot entier ; le backend applique la sienne sinon. */
+    shipFrom?: Address;
+  }) =>
     request<BulkResult>('/api/shipping/bulk', { method: 'POST', body: payload }),
 
   // Carnet d'adresses partagé : mêmes entrées pour tous les utilisateurs.
