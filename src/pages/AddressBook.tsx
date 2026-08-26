@@ -13,6 +13,7 @@ import {
   X,
   Upload,
   FileDown,
+  Warehouse,
 } from 'lucide-react';
 import { api, type AddressPayload } from '../services/api';
 import type { SavedAddress } from '../types/ups';
@@ -150,6 +151,12 @@ export default function AddressBook() {
   const setDefault = useMutation({
     mutationFn: (address: SavedAddress) =>
       api.updateAddress(address.id, { isDefault: !address.isDefault }),
+    onSuccess: invalidate,
+  });
+
+  const setDefaultShipper = useMutation({
+    mutationFn: (address: SavedAddress) =>
+      api.updateAddress(address.id, { isDefaultShipper: !address.isDefaultShipper }),
     onSuccess: invalidate,
   });
 
@@ -440,6 +447,7 @@ export default function AddressBook() {
                       onDelete={() => archive.mutate({ id: address.id, hard: true })}
                       onRestore={() => restore.mutate(address.id)}
                       onToggleDefault={() => setDefault.mutate(address)}
+                      onToggleDefaultShipper={() => setDefaultShipper.mutate(address)}
                     />
                   ))}
                 </div>
@@ -696,6 +704,7 @@ interface AddressRowProps {
   onDelete: () => void;
   onRestore: () => void;
   onToggleDefault: () => void;
+  onToggleDefaultShipper: () => void;
 }
 
 function AddressRow({
@@ -705,6 +714,7 @@ function AddressRow({
   onDelete,
   onRestore,
   onToggleDefault,
+  onToggleDefaultShipper,
 }: AddressRowProps) {
   const archived = Boolean(address.archivedAt);
 
@@ -716,7 +726,13 @@ function AddressRow({
           {address.isDefault && (
             <Badge tone="warning">
               <Star className="h-3 w-3 fill-current" />
-              Par défaut
+              Destinataire par défaut
+            </Badge>
+          )}
+          {address.isDefaultShipper && (
+            <Badge tone="primary">
+              <Warehouse className="h-3 w-3" />
+              Départ par défaut
             </Badge>
           )}
           {archived && <Badge tone="neutral">Archivée</Badge>}
@@ -757,10 +773,31 @@ function AddressRow({
               type="button"
               variant="ghost"
               size="sm"
-              title={address.isDefault ? 'Retirer le défaut' : 'Définir par défaut'}
+              title={
+                address.isDefault
+                  ? 'Retirer le défaut destinataire'
+                  : 'Destinataire par défaut'
+              }
               onClick={onToggleDefault}
             >
               <Star className={cn('h-4 w-4', address.isDefault && 'fill-amber-400 text-amber-400')} />
+            </Button>
+            {/* Bouton distinct de l'étoile : une adresse peut être le point de
+                départ habituel sans être le destinataire habituel. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              title={
+                address.isDefaultShipper
+                  ? 'Retirer le départ par défaut'
+                  : 'Point de départ par défaut'
+              }
+              onClick={onToggleDefaultShipper}
+            >
+              <Warehouse
+                className={cn('h-4 w-4', address.isDefaultShipper && 'text-[--k-primary]')}
+              />
             </Button>
             <Button type="button" variant="ghost" size="sm" title="Modifier" onClick={onEdit}>
               <Pencil className="h-4 w-4" />

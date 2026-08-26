@@ -206,6 +206,8 @@ export interface AddressPayload {
   country: string;
   residential?: boolean;
   isDefault?: boolean;
+  /** Point de depart par defaut, distinct du defaut destinataire. */
+  isDefaultShipper?: boolean;
 }
 
 export interface AddressesQuery {
@@ -265,7 +267,13 @@ export const api = {
 
   /** Adresse d'expédition par défaut, telle que configurée sur le serveur. */
   getShipper: () =>
-    request<{ shipper: ShipperAddress; configured: boolean; missing: string[] }>(
+    request<{
+      shipper: ShipperAddress;
+      source: 'address-book' | 'config';
+      addressId: number | null;
+      configured: boolean;
+      missing: string[];
+    }>(
       '/api/shipping/shipper',
     ),
   getRates: (payload: RatePayload) => request<RatingResult>('/api/rating', { method: 'POST', body: payload }),

@@ -51,6 +51,10 @@ export default function Shipping() {
   const antenneId = searchParams.get('antenne');
 
   const [shipTo, setShipTo] = useState<Address>({ country: 'FR' });
+  // Expéditeur pour cet envoi seulement. Tant que `editShipFrom` est faux, le
+  // backend applique son adresse par défaut et rien n'est transmis.
+  const [editShipFrom, setEditShipFrom] = useState(false);
+  const [shipFrom, setShipFrom] = useState<Address>({ country: 'FR' });
   const [packages, setPackages] = useState<PackageInput[]>([emptyPackage()]);
   const [description, setDescription] = useState('Marchandise');
   const [serviceCode, setServiceCode] = useState('11');
@@ -120,20 +124,31 @@ export default function Shipping() {
       .filter((n): n is string => Boolean(n)) ?? [];
 
   const set = (patch: Partial<Address>) => setShipTo((prev) => ({ ...prev, ...patch }));
+  const setFrom = (patch: Partial<Address>) => setShipFrom((prev) => ({ ...prev, ...patch }));
 
   const missing = REQUIRED_FIELDS.filter((f) => !shipTo[f.key]);
+  // L'expéditeur saisi à la main est soumis aux mêmes exigences qu'UPS
+  // impose au destinataire : mieux vaut le refuser ici qu'après l'appel.
+  const missingShipFrom = editShipFrom
+    ? REQUIRED_FIELDS.filter((f) => !shipFrom[f.key]).map((f) => f.label)
+    : [];
   const invalidPackage = packages.some((p) => !p.weight || Number(p.weight) <= 0);
   const blockedReason = missing.length
     ? `Champs manquants : ${missing.map((f) => f.label).join(', ')}`
-    : invalidPackage
-      ? 'Chaque colis doit avoir un poids supérieur à 0'
-      : null;
+    : missingShipFrom.length
+      ? `Expéditeur — champs manquants : ${missingShipFrom.join(', ')}`
+      : invalidPackage
+        ? 'Chaque colis doit avoir un poids supérieur à 0'
+        : null;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (blockedReason) return;
     mutation.mutate({
       shipTo,
+      // Absent quand on n'a pas changé d'expéditeur : le backend applique
+      // alors son adresse par défaut.
+      shipFrom: editShipFrom ? shipFrom : undefined,
       packages,
       serviceCode,
       description,
@@ -192,16 +207,118 @@ export default function Shipping() {
           <Card>
             <CardTitle
               title="Expéditeur"
-              hint="Adresse de départ, configurée sur le serveur"
+              hint={editShipFrom ? 'Pour cet envoi uniquement' : 'Adresse de départ'}
+              action={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    // Prérempli avec l'adresse courante : on corrige une ville
+                    // plutôt que de tout ressaisir.
+                    if (!editShipFrom && shipper.data?.shipper) {
+                      const s = shipper.data.shipper;
+                      setShipFrom({
+                        name: s.name,
+                        attentionName: s.attentionName,
+                        addressLine1: s.addressLine,
+                        city: s.city,
+                        postalCode: s.postalCode,
+                        state: s.state,
+                        country: s.country || 'FR',
+                      });
+                    }
+                    setEditShipFrom((v) => !v);
+                  }}
+                >
+                  {editShipFrom ? 'Utiliser l’adresse par défaut' : 'Changer'}
+                </Button>
+              }
             />
-            {shipper.isLoading ? (
+
+            {shipper.isLoading && !editShipFrom ? (
               <p className="text-[13px] text-[--k-muted]">Chargement de l’adresse…</p>
+            ) : editShipFrom ? (
+              <>
+                {/* Le carnet est partagé avec le destinataire : une antenne
+                    d'où l'on expédie n'a pas à être saisie deux fois. */}
+                <AddressPicker
+                  className="mb-3"
+                  label="Charger depuis le carnet"
+                  onSelect={(address) => setShipFrom(address)}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="Nom"
+                    required
+                    placeholder="SAS Konitys"
+                    value={shipFrom.name ?? ''}
+                    onChange={(e) => setFrom({ name: e.target.value })}
+                  />
+                  <Field
+                    label="Contact"
+                    placeholder="Service expédition"
+                    value={shipFrom.attentionName ?? ''}
+                    onChange={(e) => setFrom({ attentionName: e.target.value })}
+                  />
+                  <div className="sm:col-span-2">
+                    <AddressAutocomplete
+                      label="Adresse"
+                      required
+                      placeholder="Commencez à taper l'adresse…"
+                      value={shipFrom.addressLine1 ?? ''}
+                      onChange={(v) => setFrom({ addressLine1: v })}
+                      onSelect={(p) =>
+                        setFrom({
+                          addressLine1: p.addressLine1,
+                          city: p.city,
+                          state: p.state,
+                          postalCode: p.postalCode,
+                          country: p.country,
+                        })
+                      }
+                    />
+                  </div>
+                  <Field
+                    label="Ville"
+                    required
+                    value={shipFrom.city ?? ''}
+                    onChange={(e) => setFrom({ city: e.target.value })}
+                  />
+                  <Field
+                    label="Code postal"
+                    required
+                    value={shipFrom.postalCode ?? ''}
+                    onChange={(e) => setFrom({ postalCode: e.target.value })}
+                  />
+                  <Field
+                    label="Pays (ISO 2)"
+                    required
+                    maxLength={2}
+                    value={shipFrom.country ?? ''}
+                    onChange={(e) => setFrom({ country: e.target.value.toUpperCase() })}
+                  />
+                  <Field
+                    label="Téléphone"
+                    placeholder="0102030405"
+                    value={shipFrom.phone ?? ''}
+                    onChange={(e) => setFrom({ phone: e.target.value })}
+                  />
+                </div>
+
+                {missingShipFrom.length > 0 && (
+                  <p className="mt-2 text-[12px] text-[--k-muted]">
+                    Champs obligatoires manquants : {missingShipFrom.join(', ')}
+                  </p>
+                )}
+              </>
             ) : shipper.isError ? (
               <Alert type="error">{(shipper.error as Error).message}</Alert>
             ) : shipper.data && !shipper.data.configured ? (
               <Alert type="error">
-                Adresse d’expédition incomplète — UPS refusera l’envoi. Champs manquants côté
-                serveur : {shipper.data.missing.join(', ')}.
+                Adresse d’expédition incomplète — UPS refusera l’envoi. Champs manquants :{' '}
+                {shipper.data.missing.join(', ')}. Renseignez-la dans le carnet, ou cliquez sur
+                « Changer » pour cet envoi.
               </Alert>
             ) : shipper.data ? (
               <div className="flex items-start gap-2.5 text-[13px]">
@@ -220,6 +337,13 @@ export default function Shipping() {
                       .filter(Boolean)
                       .join(' ')}
                     <span className="text-[--k-muted]"> ({shipper.data.shipper.country})</span>
+                  </span>
+                  {/* D'où vient cette adresse : sans cela, on ne saurait pas
+                      où la corriger. */}
+                  <span className="mt-1 block text-[12px] text-[--k-muted]">
+                    {shipper.data.source === 'address-book'
+                      ? 'Depuis le carnet d’adresses'
+                      : 'Depuis la configuration du serveur'}
                   </span>
                 </p>
               </div>

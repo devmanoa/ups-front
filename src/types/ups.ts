@@ -418,6 +418,8 @@ export interface SavedAddress extends Address {
   label: string;
   groupId: number | null;
   isDefault: boolean;
+  /** Point de depart retenu par defaut, distinct du defaut destinataire. */
+  isDefaultShipper?: boolean;
   usageCount: number;
   lastUsedAt: string | null;
   archivedAt: string | null;
