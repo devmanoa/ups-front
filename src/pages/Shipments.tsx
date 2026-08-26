@@ -17,6 +17,7 @@ import {
   Clock,
   MessageSquare,
   FileText,
+  ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api, type ShipmentsQuery } from '../services/api';
@@ -440,6 +441,18 @@ function ShipmentRow({ shipment, onVoid, voiding }: RowProps) {
           </div>
 
           <p className="mt-1 text-[13px] text-[--k-text]">
+            {/* Trajet en une ligne : l'expéditeur n'apparaît que s'il est
+                connu — les envois antérieurs à son enregistrement n'en ont
+                pas, et « inconnu → destinataire » n'apprendrait rien. */}
+            {shipment.shipper?.name && (
+              <>
+                <span className="text-[--k-muted]">
+                  {shipment.shipper.name}
+                  {shipment.shipper.city && ` (${shipment.shipper.city})`}
+                </span>
+                <ArrowRight className="mx-1.5 inline h-3.5 w-3.5 text-[--k-muted]" />
+              </>
+            )}
             {shipment.recipient.name || 'Destinataire inconnu'}
             {address && <span className="text-[--k-muted]"> — {address}</span>}
             {shipment.recipient.country && (

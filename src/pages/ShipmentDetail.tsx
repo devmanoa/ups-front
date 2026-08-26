@@ -254,6 +254,29 @@ export default function ShipmentDetail() {
                 sur toute la largeur pour quelques lignes de texte. */}
             <div className="mt-4 grid gap-x-6 gap-y-4 border-t border-[--k-border] pt-4 lg:grid-cols-2">
               <div className="min-w-0 space-y-3">
+                {/* Expéditeur avant destinataire : le trajet se lit dans le
+                    sens du colis. Absent sur les envois antérieurs à son
+                    enregistrement — on n'affiche alors rien. */}
+                {shipment.shipper?.name && (
+                  <div className="min-w-0">
+                    <dt className="text-[12px] font-medium text-[--k-muted]">Expéditeur</dt>
+                    <dd className="mt-0.5 text-[13px] leading-relaxed text-[--k-text]">
+                      <span className="font-medium">{shipment.shipper.name}</span>
+                      {shipment.shipper.address && (
+                        <span className="block">{shipment.shipper.address}</span>
+                      )}
+                      <span className="block">
+                        {[shipment.shipper.postalCode, shipment.shipper.city]
+                          .filter(Boolean)
+                          .join(' ')}
+                        {shipment.shipper.country && (
+                          <span className="text-[--k-muted]"> ({shipment.shipper.country})</span>
+                        )}
+                      </span>
+                    </dd>
+                  </div>
+                )}
+
                 <div className="min-w-0">
                   <dt className="text-[12px] font-medium text-[--k-muted]">Destinataire</dt>
                   <dd className="mt-0.5 text-[13px] leading-relaxed text-[--k-text]">

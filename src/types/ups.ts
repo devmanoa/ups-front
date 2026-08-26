@@ -225,6 +225,14 @@ export interface StoredShipment {
     postalCode: string | null;
     country: string | null;
   };
+  /** Adresse de départ figée à la création ; absente sur les envois anciens. */
+  shipper: {
+    name: string | null;
+    address: string | null;
+    city: string | null;
+    postalCode: string | null;
+    country: string | null;
+  } | null;
   reference: string | null;
   description: string | null;
   totalCharges: number | null;
