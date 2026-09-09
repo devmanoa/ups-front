@@ -304,6 +304,22 @@ export interface ShipmentComment {
   body: string;
   createdAt: string;
   actor: ShipmentActor | null;
+  /** Collègues mentionnés, résolus par le serveur depuis le corps du message. */
+  mentions?: DirectoryUser[];
+}
+
+/** Utilisateur de l'annuaire Keycloak, pour les mentions. */
+export interface DirectoryUser {
+  id: string;
+  username: string | null;
+  name: string;
+  email: string | null;
+}
+
+export interface DirectoryResult {
+  users: DirectoryUser[];
+  configured: boolean;
+  missing?: string[];
 }
 
 /** Réponse de GET /api/shipments/:trackingNumber — tout ce qu'affiche la page dédiée. */

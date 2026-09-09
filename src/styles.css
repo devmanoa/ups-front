@@ -90,3 +90,17 @@ body {
 .prose-comment li { margin: 0.125rem 0; }
 .prose-comment a { color: var(--k-primary); text-decoration: underline; }
 .prose-comment p { margin: 0.25rem 0; }
+
+/* Mention d'un collègue dans un commentaire. Colorée et légèrement
+   surlignée : dans un fil dense, un simple « @Julie » en texte courant se
+   confondrait avec le reste du message. */
+.mention {
+  color: var(--k-primary);
+  background: color-mix(in srgb, var(--k-primary) 10%, transparent);
+  border-radius: 0.25rem;
+  padding: 0 0.2rem;
+  font-weight: 500;
+  /* Une mention se supprime d'un bloc, jamais lettre par lettre : sans cela
+     l'identifiant survivrait à un texte à moitié effacé. */
+  white-space: nowrap;
+}

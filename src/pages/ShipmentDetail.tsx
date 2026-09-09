@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useCallback, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -116,6 +116,24 @@ export default function ShipmentDetail() {
       }
     },
   });
+
+  /**
+   * Collègues proposés à la frappe d'un « @ ».
+   *
+   * Le cache de react-query évite de réinterroger l'annuaire pour un terme
+   * déjà tapé, fréquent quand on efface une lettre puis la retape.
+   */
+  const searchColleagues = useCallback(
+    async (query: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: ['users', query],
+        queryFn: () => api.searchUsers(query),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result.users;
+    },
+    [queryClient],
+  );
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -456,6 +474,7 @@ export default function ShipmentDetail() {
                 onChange={setBody}
                 placeholder="Client prévenu par téléphone, colis récupéré à l’agence…"
                 disabled={addComment.isPending}
+                onMentionSearch={searchColleagues}
               />
               <div className="flex items-center gap-2">
                 <Button type="submit" isLoading={addComment.isPending} disabled={isHtmlEmpty(body)}>

@@ -40,6 +40,7 @@ import type {
   PackageTypesResult,
   PackagingCode,
   StatsResult,
+  DirectoryResult,
 } from '../types/ups';
 
 const API_URL = runtimeConfig.apiUrl;
@@ -336,6 +337,10 @@ export const api = {
       `/api/shipments/${encodeURIComponent(trackingNumber)}/comments`,
       { method: 'POST', body: { body } },
     ),
+
+  /** Annuaire pour les mentions. Liste vide si Keycloak Admin n'est pas configuré. */
+  searchUsers: (search: string) =>
+    request<DirectoryResult>(`/api/users?search=${encodeURIComponent(search)}`),
 
   deleteShipmentComment: (trackingNumber: string, id: number) =>
     request<{ id: number }>(
