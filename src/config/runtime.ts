@@ -27,6 +27,9 @@ export const runtimeConfig = {
   // envoi. Distincte de ANTENNES_API_URL, côté backend : celle-ci est
   // l'interface web, celle-là le service de données.
   antennesAppUrl: resolve('ANTENNES_APP_URL', import.meta.env.VITE_ANTENNES_APP_URL),
+  // Passerelle Konitys : sert les droits de l'utilisateur. Absente, aucun
+  // bouton n'est masque et le serveur reste seul juge.
+  gatewayUrl: resolve('GATEWAY_URL', import.meta.env.VITE_GATEWAY_URL),
   // Clé Google Maps : visible côté navigateur par conception, elle doit être
   // restreinte par domaine dans la console Google Cloud.
   googleMapsApiKey: resolve('GOOGLE_MAPS_API_KEY', import.meta.env.VITE_GOOGLE_MAPS_API_KEY),

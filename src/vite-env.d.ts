@@ -25,6 +25,8 @@ interface AppRuntimeConfig {
   PLATEFORM_URL?: string;
   /** Interface web d'Antennes, pour renvoyer vers la fiche d'un contact. */
   ANTENNES_APP_URL?: string;
+  /** Passerelle Konitys : droits de l utilisateur pour masquer les actions. */
+  GATEWAY_URL?: string;
   GOOGLE_MAPS_API_KEY?: string;
 }
 

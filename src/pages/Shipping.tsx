@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Tag, Download, XCircle, CheckCircle2, Receipt, Printer, Truck, Building2, Warehouse } from 'lucide-react';
 import { api, type ShipmentPayload } from '../services/api';
+import { usePermissions } from '../hooks/usePermissions';
 import type { PackageInput, ShipmentResult, VoidResult, Address } from '../types/ups';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardTitle } from '../components/ui/Card';
@@ -60,6 +61,8 @@ export default function Shipping() {
   const [serviceCode, setServiceCode] = useState('11');
   const [labelFormat, setLabelFormat] = useState('GIF');
   const [accessPointLocationId, setAccessPointLocationId] = useState('');
+
+  const { can } = usePermissions();
 
   const services = useQuery({
     queryKey: ['services'],
@@ -133,13 +136,17 @@ export default function Shipping() {
     ? REQUIRED_FIELDS.filter((f) => !shipFrom[f.key]).map((f) => f.label)
     : [];
   const invalidPackage = packages.some((p) => !p.weight || Number(p.weight) <= 0);
-  const blockedReason = missing.length
-    ? `Champs manquants : ${missing.map((f) => f.label).join(', ')}`
-    : missingShipFrom.length
-      ? `Expéditeur — champs manquants : ${missingShipFrom.join(', ')}`
-      : invalidPackage
-        ? 'Chaque colis doit avoir un poids supérieur à 0'
-        : null;
+  // Le droit passe avant la validation : inutile de réclamer des champs pour
+  // une action que l'utilisateur ne peut pas mener à bien.
+  const blockedReason = !can('shipments.create')
+    ? 'Vous n’avez pas le droit de créer une étiquette.'
+    : missing.length
+      ? `Champs manquants : ${missing.map((f) => f.label).join(', ')}`
+      : missingShipFrom.length
+        ? `Expéditeur — champs manquants : ${missingShipFrom.join(', ')}`
+        : invalidPackage
+          ? 'Chaque colis doit avoir un poids supérieur à 0'
+          : null;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
