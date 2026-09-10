@@ -344,6 +344,18 @@ export function RichTextEditor({
           style={{ minHeight }}
         />
 
+        {/* Invite tant qu'aucune lettre n'est tapée : l'annuaire compte
+            plusieurs dizaines de personnes et ne répond qu'à une recherche,
+            un menu vide laisserait croire à une panne. */}
+        {mentionQuery === '' && menuPos && (
+          <p
+            className="absolute z-20 rounded-lg border border-[--k-border] bg-[--k-surface] px-3 py-1.5 text-[12px] text-[--k-muted] shadow-lg"
+            style={{ top: menuPos.top, left: menuPos.left }}
+          >
+            Tapez une lettre pour chercher un collègue
+          </p>
+        )}
+
         {mentionQuery !== null && candidates.length > 0 && menuPos && (
           <ul
             role="listbox"
